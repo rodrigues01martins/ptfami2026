@@ -1,0 +1,70 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and role information.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "user"] }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "LedgerEntry": {
+      "title": "Ledger Entry",
+      "description": "A financial record of an expense.",
+      "type": "object",
+      "properties": {
+        "itemCode": { "type": "string" },
+        "nf": { "type": "string" },
+        "supplier": { "type": "string" },
+        "category": { "type": "string" },
+        "documentName": { "type": "string" },
+        "documentData": { "type": "string", "description": "Base64 encoded PDF data" },
+        "approvalStatus": { "type": "string", "enum": ["Pendente", "Aprovado", "Reprovado"] },
+        "stage": { "type": "string" },
+        "group": { "type": "string" },
+        "description": { "type": "string" },
+        "amount": { "type": "number" },
+        "date": { "type": "string" },
+        "referenceMonth": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "authorUid": { "type": "string" }
+      },
+      "required": ["itemCode", "description", "amount", "date", "authorUid"]
+    },
+    "AuditLog": {
+      "title": "Audit Log",
+      "description": "A record of an action performed in the system.",
+      "type": "object",
+      "properties": {
+        "timestamp": { "type": "string", "format": "date-time" },
+        "action": { "type": "string" },
+        "itemCode": { "type": "string" },
+        "nf": { "type": "string" },
+        "amount": { "type": "number" },
+        "detail": { "type": "string" },
+        "authorUid": { "type": "string" }
+      },
+      "required": ["timestamp", "action", "authorUid"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles."
+    },
+    "/ledger": {
+      "schema": "LedgerEntry",
+      "description": "Financial records."
+    },
+    "/audit": {
+      "schema": "AuditLog",
+      "description": "System audit logs."
+    }
+  }
+}

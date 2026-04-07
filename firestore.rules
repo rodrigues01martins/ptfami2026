@@ -1,0 +1,132 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: userId (UID)
+    // Fields:
+    //   - uid: string (required)
+    //   - email: string (required)
+    //   - displayName: string (optional)
+    //   - photoURL: string (optional)
+    //   - role: string (required, 'admin' or 'user')
+    //
+    // Collection: ledger
+    // Document ID: auto-generated
+    // Fields:
+    //   - itemCode: string (required)
+    //   - nf: string (optional)
+    //   - supplier: string (optional)
+    //   - category: string (required)
+    //   - documentName: string (optional)
+    //   - documentData: string (optional, base64 PDF)
+    //   - approvalStatus: string (required, 'Pendente', 'Aprovado', 'Reprovado')
+    //   - stage: string (required)
+    //   - group: string (required)
+    //   - description: string (required)
+    //   - amount: number (required)
+    //   - date: string (required)
+    //   - referenceMonth: string (optional)
+    //   - createdAt: string (required)
+    //   - updatedAt: string (required)
+    //   - authorUid: string (required)
+    //
+    // Collection: audit
+    // Document ID: auto-generated
+    // Fields:
+    //   - timestamp: string (required)
+    //   - action: string (required)
+    //   - itemCode: string (optional)
+    //   - nf: string (optional)
+    //   - amount: number (optional)
+    //   - detail: string (optional)
+    //   - authorUid: string (required)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "rodrigues01martins@gmail.com" && request.auth.token.email_verified == true));
+    }
+    
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+    
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+    
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser(data) {
+      return data.uid is string && data.uid.size() > 0 &&
+             data.email is string && isValidEmail(data.email) &&
+             data.role in ['admin', 'user'];
+    }
+
+    function isValidLedgerEntry(data) {
+      return data.itemCode is string && data.itemCode.size() > 0 &&
+             data.description is string && data.description.size() > 0 && data.description.size() < 500 &&
+             data.amount is number && data.amount > 0 &&
+             data.date is string &&
+             data.authorUid is string && data.authorUid == request.auth.uid &&
+             data.approvalStatus in ['Pendente', 'Aprovado', 'Reprovado'];
+    }
+
+    function isValidAuditLog(data) {
+      return data.timestamp is string &&
+             data.action is string && data.action.size() > 0 &&
+             data.authorUid is string && data.authorUid == request.auth.uid;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidUser(request.resource.data) && 
+                    ((isOwner(userId) && request.resource.data.role == 'user') || isAdmin());
+      allow update: if isAuthenticated() && isValidUser(request.resource.data) && 
+                    ((isOwner(userId) && request.resource.data.role == resource.data.role) || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    match /ledger/{entryId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidLedgerEntry(request.resource.data);
+      allow update: if isAuthenticated() && (isAdmin() || (request.auth.uid == resource.data.authorUid && isValidLedgerEntry(request.resource.data)));
+      allow delete: if isAdmin();
+    }
+
+    match /audit/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated() && isValidAuditLog(request.resource.data);
+      allow update, delete: if false;
+    }
+  }
+}

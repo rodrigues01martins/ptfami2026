@@ -1,0 +1,60 @@
+import React from 'react';
+import { Trash2, FileSpreadsheet, Download, ShieldCheck } from 'lucide-react';
+
+interface HeaderProps {
+  onClear: () => void;
+  onExportCSV: () => void;
+  onExportExcel: () => void;
+  onExportAudit: () => void;
+}
+
+export const Header: React.FC<HeaderProps> = ({ onClear, onExportCSV, onExportExcel, onExportAudit }) => {
+  return (
+    <header className="mb-8 rounded-3xl overflow-hidden shadow-lg border border-[#00735C]">
+      <div className="bg-[#00735C] px-6 py-6 md:px-8 md:py-7 flex flex-col xl:flex-row xl:items-center justify-between gap-6 text-white">
+        <div>
+          <div className="inline-flex items-center gap-2 mb-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-semibold tracking-wide text-white/90">
+            SEDS • Governo de Goiás
+          </div>
+          <p className="text-sm text-white/85 mb-1">Secretaria de Estado de Desenvolvimento Social</p>
+          <h1 className="text-3xl font-bold tracking-tight text-white">Plano de Trabalho 02/2026</h1>
+          <p className="font-medium text-lg text-white/90">Monitoramento e Avaliação</p>
+        </div>
+        <div className="flex items-center gap-3 self-start xl:self-auto">
+          <div className="h-16 w-24 md:h-20 md:w-28 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center overflow-hidden">
+             <span className="text-[11px] font-semibold tracking-wide text-white/80">logo1.png</span>
+          </div>
+          <div className="h-16 w-24 md:h-20 md:w-28 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center overflow-hidden">
+            <span className="text-[11px] font-semibold tracking-wide text-white/80">logo2.png</span>
+          </div>
+        </div>
+      </div>
+      <div className="bg-white px-6 py-4 md:px-8 flex flex-wrap gap-3">
+        <button 
+          className="bg-white border border-[#00735C]/25 text-[#00735C] hover:bg-red-50 hover:text-red-600 hover:border-red-200 px-4 py-2 rounded-xl font-medium transition text-sm flex items-center gap-2"
+          onClick={onClear}
+        >
+          <Trash2 size={16} /> Limpar Tudo
+        </button>
+        <button 
+          className="bg-white border border-[#00735C]/25 text-[#00735C] hover:bg-[#00735C]/5 px-4 py-2 rounded-xl font-medium transition text-sm flex items-center gap-2"
+          onClick={onExportCSV}
+        >
+          <FileSpreadsheet size={16} /> Exportar Registros (CSV)
+        </button>
+        <button 
+          className="bg-[#00735C] hover:bg-[#005b49] text-white px-5 py-2.5 rounded-xl font-semibold transition shadow-lg text-sm flex items-center gap-2"
+          onClick={onExportExcel}
+        >
+          <Download size={16} /> Exportar Excel
+        </button>
+        <button 
+          className="bg-[#FCD951] hover:bg-[#f7cf2f] text-slate-900 px-4 py-2 rounded-xl font-semibold transition text-sm flex items-center gap-2"
+          onClick={onExportAudit}
+        >
+          <ShieldCheck size={16} /> Exportar Auditoria
+        </button>
+      </div>
+    </header>
+  );
+};
