@@ -3,13 +3,13 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const config = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  apiKey: "AIzaSyCd1jsbX6s1WXfh5u8lI1FYvSedGrB6gCM",
   authDomain: "fami2026.firebaseapp.com",
-projectId: "fami2026",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID // Caso use Analytics
+  projectId: "fami2026",
+  storageBucket: "fami2026.firebasestorage.app",
+  messagingSenderId: "772182699025",
+  appId: "1:772182699025:web:24b04b79e4219e947b55b0",
+  measurementId: ""
 };
 
 const app = initializeApp(config);
