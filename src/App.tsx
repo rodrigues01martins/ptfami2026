@@ -29,6 +29,8 @@ import { LedgerEntry, AuditLogEntry } from './types';
 import { normalizeDateInput } from './lib/utils';
 import { LogOut, User as UserIcon } from 'lucide-react';
 
+const ADMIN_EMAIL = 'rodrigues01martins@gmail.com';
+
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [isDemoMode, setIsDemoMode] = useState(false);
@@ -38,6 +40,8 @@ export default function App() {
   const [auditLog, setAuditLog] = useState<AuditLogEntry[]>([]);
   const [toast, setToast] = useState({ message: '', isVisible: false });
   const [editingEntry, setEditingEntry] = useState<LedgerEntry | null>(null);
+  const [isConfirmingClear, setIsConfirmingClear] = useState(false);
+  const [entryToDelete, setEntryToDelete] = useState<any | null>(null);
 
   // Test connection to Firestore
   useEffect(() => {
@@ -98,7 +102,7 @@ export default function App() {
 
     const auditQuery = query(collection(db, 'audit'), orderBy('timestamp', 'desc'));
     const unsubscribeAudit = onSnapshot(auditQuery, (snapshot) => {
-      const logs = snapshot.docs.map(doc => doc.data() as AuditLogEntry);
+      const logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
       setAuditLog(logs);
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, 'audit');
@@ -240,13 +244,20 @@ export default function App() {
   };
 
   const handleDeleteEntry = async (id: any) => {
-    if (!confirm('Deseja remover este lançamento?')) return;
+    if (entryToDelete !== id) {
+      setEntryToDelete(id);
+      showToast('Clique novamente em "Excluir" para confirmar.');
+      setTimeout(() => setEntryToDelete(null), 3000);
+      return;
+    }
+
     const entry = ledgerEntries.find(e => e.id === id);
     if (entry) {
       try {
         await deleteDoc(doc(db, 'ledger', id.toString()));
         addAuditLog('Exclusão', entry, `${entry.supplier} · ${entry.description}`);
         showToast('Lançamento removido.');
+        setEntryToDelete(null);
       } catch (error) {
         handleFirestoreError(error, OperationType.DELETE, `ledger/${id}`);
       }
@@ -270,10 +281,109 @@ export default function App() {
   };
 
   const handleClearAll = async () => {
-    if (confirm('Deseja apagar todos os registros lançados? (Apenas administradores podem fazer isso em massa)')) {
-      // For safety, we don't implement batch delete here without admin check
-      showToast('Operação restrita. Remova os itens individualmente ou contate um administrador.');
+    const isAdmin = user?.email === ADMIN_EMAIL;
+    
+    if (!isAdmin) {
+      showToast('Operação restrita. Apenas o administrador pode realizar a limpeza em massa.');
+      return;
     }
+
+    if (!isConfirmingClear) {
+      setIsConfirmingClear(true);
+      showToast('Clique novamente em "Limpar Tudo" para confirmar a exclusão de TODOS os dados.');
+      setTimeout(() => setIsConfirmingClear(false), 5000);
+      return;
+    }
+
+    try {
+      showToast('Iniciando limpeza do banco de dados...');
+      // Delete ledger entries
+      const ledgerPromises = ledgerEntries.map(entry => deleteDoc(doc(db, 'ledger', entry.id.toString())));
+      await Promise.all(ledgerPromises);
+      
+      // Delete audit logs
+      const auditPromises = auditLog.map(log => deleteDoc(doc(db, 'audit', (log as any).id)));
+      await Promise.all(auditPromises);
+
+      addAuditLog('Limpeza Total', {}, 'O administrador realizou a limpeza completa do banco de dados.');
+      showToast('Banco de dados limpo com sucesso.');
+      setIsConfirmingClear(false);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, 'ledger/bulk');
+      showToast('Erro ao limpar banco de dados.');
+    }
+  };
+
+  const handleExportCSV = () => {
+    if (ledgerEntries.length === 0) {
+      showToast('Não há dados para exportar.');
+      return;
+    }
+    const headers = ['Item', 'NF', 'Fornecedor', 'Descricao', 'Categoria', 'Valor', 'Data', 'Status'];
+    const rows = ledgerEntries.map(e => [
+      e.itemCode,
+      e.nf || '',
+      e.supplier || '',
+      e.description,
+      e.category,
+      e.amount,
+      e.date,
+      e.approvalStatus
+    ]);
+    const csvContent = [headers, ...rows].map(r => r.join(';')).join('\n');
+    const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `PT_02_2026_Registros_${new Date().toLocaleDateString()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('Exportação CSV iniciada.');
+  };
+
+  const handleExportExcel = () => {
+    if (ledgerEntries.length === 0) {
+      showToast('Não há dados para exportar.');
+      return;
+    }
+    const worksheet = XLSX.utils.json_to_sheet(ledgerEntries.map(e => ({
+      'Item': e.itemCode,
+      'NF': e.nf || '',
+      'Fornecedor': e.supplier || '',
+      'Descrição': e.description,
+      'Categoria': e.category,
+      'Grupo': e.group,
+      'Etapa': e.stage,
+      'Valor': e.amount,
+      'Data': e.date,
+      'Status': e.approvalStatus,
+      'Criado em': new Date(e.createdAt).toLocaleString('pt-BR')
+    })));
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Registros");
+    XLSX.writeFile(workbook, `PT_02_2026_Financeiro_${new Date().toLocaleDateString()}.xlsx`);
+    showToast('Exportação Excel iniciada.');
+  };
+
+  const handleExportAudit = () => {
+    if (auditLog.length === 0) {
+      showToast('Não há logs de auditoria para exportar.');
+      return;
+    }
+    const worksheet = XLSX.utils.json_to_sheet(auditLog.map(l => ({
+      'Data/Hora': new Date(l.timestamp).toLocaleString('pt-BR'),
+      'Ação': l.action,
+      'Item': l.itemCode,
+      'NF': l.nf,
+      'Valor': l.amount,
+      'Detalhe': l.detail,
+      'Usuário (UID)': l.authorUid
+    })));
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Auditoria");
+    XLSX.writeFile(workbook, `PT_02_2026_Auditoria_${new Date().toLocaleDateString()}.xlsx`);
+    showToast('Exportação de Auditoria iniciada.');
   };
 
   const handleLogout = () => signOut(auth);
@@ -310,9 +420,9 @@ export default function App() {
 
         <Header 
           onClear={handleClearAll} 
-          onExportCSV={() => {}} 
-          onExportExcel={() => {}} 
-          onExportAudit={() => {}} 
+          onExportCSV={handleExportCSV} 
+          onExportExcel={handleExportExcel} 
+          onExportAudit={handleExportAudit} 
         />
 
         <div className="mb-6 flex flex-wrap gap-3">

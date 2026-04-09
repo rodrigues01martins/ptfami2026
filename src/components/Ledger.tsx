@@ -33,8 +33,26 @@ export const Ledger: React.FC<LedgerProps> = ({ entries, onEdit, onDelete, onSta
   });
 
   const openDocument = (data: string) => {
-    const w = window.open(data, '_blank');
-    if (!w) alert('O navegador bloqueou a abertura do PDF.');
+    try {
+      // For base64 data, it's safer to create a blob and a URL
+      if (data.startsWith('data:application/pdf;base64,')) {
+        const base64Content = data.split(',')[1];
+        const byteCharacters = atob(base64Content);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+      } else {
+        window.open(data, '_blank');
+      }
+    } catch (err) {
+      console.error('Erro ao abrir documento:', err);
+      alert('Não foi possível abrir o documento. Verifique se o arquivo é um PDF válido.');
+    }
   };
 
   return (

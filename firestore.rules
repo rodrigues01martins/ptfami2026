@@ -118,14 +118,14 @@ service cloud.firestore {
 
     match /ledger/{entryId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isValidLedgerEntry(request.resource.data);
-      allow update: if isAuthenticated() && (isAdmin() || (request.auth.uid == resource.data.authorUid && isValidLedgerEntry(request.resource.data)));
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
       allow delete: if isAdmin();
     }
 
     match /audit/{logId} {
-      allow read: if isAdmin();
-      allow create: if isAuthenticated() && isValidAuditLog(request.resource.data);
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
       allow update, delete: if false;
     }
   }

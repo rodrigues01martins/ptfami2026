@@ -20,12 +20,24 @@ export const Header: React.FC<HeaderProps> = ({ onClear, onExportCSV, onExportEx
           <h1 className="text-3xl font-bold tracking-tight text-white">Plano de Trabalho 02/2026</h1>
           <p className="font-medium text-lg text-white/90">Monitoramento e Avaliação</p>
         </div>
-        <div className="flex items-center gap-3 self-start xl:self-auto">
-          <div className="h-16 w-24 md:h-20 md:w-28 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center overflow-hidden">
-             <span className="text-[11px] font-semibold tracking-wide text-white/80">logo1.png</span>
+        <div className="flex items-center gap-6 self-start xl:self-auto">
+          {/* Logo SEDS */}
+          <div className="h-12 md:h-16 flex items-center justify-center">
+             <img 
+               src="/src/components/logo-seds.png.png" 
+               alt="Logo SEDS" 
+               className="h-full w-auto object-contain"
+               referrerPolicy="no-referrer"
+             />
           </div>
-          <div className="h-16 w-24 md:h-20 md:w-28 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center overflow-hidden">
-            <span className="text-[11px] font-semibold tracking-wide text-white/80">logo2.png</span>
+          {/* Logo GOIÁS SOCIAL */}
+          <div className="h-12 md:h-16 flex items-center justify-center border-l border-white/20 pl-6">
+            <img 
+              src="/src/components/logo-goias-social.png.png" 
+              alt="Logo Goiás Social" 
+              className="h-full w-auto object-contain"
+              referrerPolicy="no-referrer"
+            />
           </div>
         </div>
       </div>
