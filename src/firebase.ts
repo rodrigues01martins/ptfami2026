@@ -11,8 +11,11 @@ const firebaseConfig = {
   appId: "1:708564516153:web:28e1c6df35bd660330bce8",
   measurementId: "G-6GEKDYVLJP"
 };
-
-const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 export const db = getFirestore(app);
+
+export const handleFirestoreError = (error: any) => {
+  console.error("Erro no Firestore:", error);
+  return "Ocorreu um erro ao acessar os dados. Verifique sua conexão.";
+};
