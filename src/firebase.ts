@@ -3,13 +3,13 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const config = {
- apiKey: "AIzaSyBPDb_B8dVoYqE76cYeMW5xFuKBFhjHDoE",
-  authDomain: "fami2026.firebaseapp.com",
-  projectId: "fami2026",
-  storageBucket: "fami2026.firebasestorage.app",
-  messagingSenderId: "708564516153",
-  appId: "1:708564516153:web:28e1c6df35bd660330bce8",
-  measurementId: "G-6GEKDYVLJP"
+  apiKey: "AIzaSyCd1jsbX6s1WXfh5u8lI1FYvSedGrB6gCM",
+  authDomain: "gen-lang-client-0266149074.firebaseapp.com",
+  projectId: "gen-lang-client-0266149074",
+  storageBucket: "gen-lang-client-0266149074.firebasestorage.app",
+  messagingSenderId: "772182699025",
+  appId: "1:772182699025:web:24b04b79e4219e947b55b0",
+  measurementId: ""
 };
 
 const app = initializeApp(config);
