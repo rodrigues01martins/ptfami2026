@@ -24,7 +24,7 @@ export const Header: React.FC<HeaderProps> = ({ onClear, onExportCSV, onExportEx
           {/* Logo SEDS */}
           <div className="h-12 md:h-16 flex items-center justify-center">
              <img 
-               src="/logo-seds.png.png" 
+               src="/logo-seds.png" 
                alt="Logo SEDS" 
                className="h-full w-auto object-contain"
                referrerPolicy="no-referrer"
@@ -33,7 +33,7 @@ export const Header: React.FC<HeaderProps> = ({ onClear, onExportCSV, onExportEx
           {/* Logo GOIÁS SOCIAL */}
           <div className="h-12 md:h-16 flex items-center justify-center border-l border-white/20 pl-6">
             <img 
-              src="/logo-goias-social.png.png" 
+              src="/logo-goias-social.png" 
               alt="Logo Goiás Social" 
               className="h-full w-auto object-contain"
               referrerPolicy="no-referrer"
