@@ -28,7 +28,7 @@ export const Login: React.FC<LoginProps> = ({ onDemoMode }) => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 border border-slate-100">
-        <h2 className="text-2xl font-bold text-[#00735C] text-center mb-6">Acesso SEDS</h2>
+        <h2 className="text-2xl font-bold text-[#00735C] text-center mb-6">Acessar</h2>
         <form onSubmit={handleLogin} className="space-y-4">
           <input
             type="email"
