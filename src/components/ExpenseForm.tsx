@@ -154,7 +154,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd, showToast }) =>
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Mês de Referência</label>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Mes de Referencia</label>
             <input 
               className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#00735C] outline-none border text-sm bg-white"
               value={referenceMonth}
@@ -185,7 +185,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd, showToast }) =>
           className="w-full bg-[#00735C] hover:bg-[#005b49] text-white font-bold py-3.5 rounded-xl shadow-md transition-all active:scale-[0.98]"
           type="submit"
         >
-          Registrar Informações
+          Incluir Registros
         </button>
       </form>
     </div>
