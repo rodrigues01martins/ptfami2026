@@ -13,9 +13,10 @@ const config = {
 };
 
 const app = initializeApp(config);
-export const auth = getAuth(app);
-export const db = getFirestore(app, "ai-studio-08de845e-c660-4fe0-9c79-22a7c922c914");
 
+// AJUSTE AQUI: Removi o ID do projeto antigo para ele usar o banco padrão do fami2026
+export const auth = getAuth(app);
+export const db = getFirestore(app); 
 
 export enum OperationType {
   CREATE = 'create',
@@ -65,6 +66,4 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     path
   };
   console.error('Firestore Error: ', JSON.stringify(errInfo));
-  // We log the error but don't throw it to avoid crashing the entire app
-  // This allows the UI to stay responsive even if a specific request fails
 }
