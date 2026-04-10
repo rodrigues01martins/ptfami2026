@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import * as XLSX from 'xlsx';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { 
   collection, onSnapshot, addDoc, updateDoc, deleteDoc, 
-  doc, query, orderBy, getDoc 
+  doc, query, orderBy 
 } from 'firebase/firestore';
 import { auth, db } from './firebase';
 
@@ -24,8 +23,6 @@ import { LedgerEntry } from './types';
 import { normalizeDateInput } from './lib/utils';
 import { LogOut, User as UserIcon } from 'lucide-react';
 
-const ADMIN_EMAIL = 'rodrigues01martins@gmail.com';
-
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [isDemoMode, setIsDemoMode] = useState(false);
@@ -35,6 +32,7 @@ export default function App() {
   const [toast, setToast] = useState({ message: '', isVisible: false });
   const [editingEntry, setEditingEntry] = useState<LedgerEntry | null>(null);
 
+  // Monitor de Autenticação
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -43,18 +41,20 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // --- BUSCA REAL NO FIRESTORE ---
+  // Busca de dados em tempo real (Sincronizado com Firestore)
   useEffect(() => {
     if (!user && !isDemoMode) return;
     
-    // Esta parte garante que os dados venham do banco e não sumam no F5
     const q = query(collection(db, 'ledger'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as LedgerEntry));
+      const data = snapshot.docs.map(doc => ({
+        ...doc.data(),
+        id: doc.id // Garante que o ID do Firestore seja usado para Edição/Exclusão
+      } as LedgerEntry));
       setLedgerEntries(data);
     }, (error) => {
-      console.error("Erro ao buscar dados:", error);
-      showToast("Erro de conexão com o Banco de Dados.");
+      console.error("Erro Firestore:", error);
+      showToast("Erro ao carregar dados do banco.");
     });
 
     return () => unsubscribe();
@@ -65,126 +65,130 @@ export default function App() {
     setTimeout(() => setToast(prev => ({ ...prev, isVisible: false })), 3000);
   };
 
-  const isAdmin = () => user?.email === ADMIN_EMAIL;
-
-  // --- FUNÇÕES DE EXPORTAÇÃO (CORRIGIDAS) ---
-  const handleExportExcel = () => {
-    if (ledgerEntries.length === 0) return showToast("Sem dados para exportar.");
-    const ws = XLSX.utils.json_to_sheet(ledgerEntries);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Dados");
-    XLSX.writeFile(wb, "Relatorio_SEDS.xlsx");
-  };
-
+  // --- FUNÇÃO ÚNICA DE EXPORTAÇÃO ---
   const handleExportCSV = () => {
-    if (ledgerEntries.length === 0) return showToast("Sem dados para exportar.");
-    const headers = "ID,Data,Fornecedor,Valor,Categoria\n";
-    const rows = ledgerEntries.map(e => `${e.itemCode},${e.date},${e.supplier},${e.amount},${e.category}`).join("\n");
-    const blob = new Blob([headers + rows], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'dados_seds.csv';
-    a.click();
+    if (ledgerEntries.length === 0) return showToast("Não há dados para exportar.");
+    const headers = "Mês Referência;Item;Fornecedor;NF;Valor;Categoria\n";
+    const rows = ledgerEntries.map(e => 
+      `${e.date};${e.itemCode};${e.supplier};${e.nf || ''};${e.amount};${e.category}`
+    ).join("\n");
+    
+    const blob = new Blob(["\ufeff" + rows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `Registros_SEDS_${new Date().toLocaleDateString()}.csv`);
+    link.click();
+    showToast("Exportação CSV concluída.");
   };
 
-  // --- FUNÇÕES DE BANCO DE DADOS (INCLUIR / EDITAR / EXCLUIR) ---
+  // --- OPERAÇÕES DE BANCO DE DADOS ---
   const handleAddEntry = async (data: any) => {
-    if (!user) return;
+    if (!user && !isDemoMode) return;
     try {
       const item = BUDGET_DATA.find(i => i.id === data.itemCode);
       const newEntry = {
         ...data,
         category: item?.type || 'Outros',
-        createdAt: new Date().toISOString(),
-        authorUid: user.uid,
-        date: normalizeDateInput(data.date)
+        stage: item?.stage || '',
+        group: item?.group || '',
+        date: normalizeDateInput(data.date), // Mês de Referência
+        createdAt: new Date().toISOString(), // Data de Lançamento (Sistema)
+        authorUid: user?.uid || 'demo-user'
       };
-      // SALVA NO FIRESTORE DE VERDADE
       await addDoc(collection(db, 'ledger'), newEntry);
-      showToast("Registro salvo no Banco de Dados!");
+      showToast("Registro incluído com sucesso!");
       setActiveTab('report');
     } catch (e) {
-      showToast("Erro ao salvar. Verifique sua conexão.");
+      showToast("Erro ao gravar no banco.");
     }
   };
 
   const handleUpdateEntry = async (updated: LedgerEntry) => {
     try {
-      const entryRef = doc(db, 'ledger', updated.id.toString());
-      const { id, ...data } = updated;
-      await updateDoc(entryRef, data);
+      const { id, ...dataToSave } = updated;
+      const entryRef = doc(db, 'ledger', id);
+      await updateDoc(entryRef, dataToSave);
       setEditingEntry(null);
-      showToast("Registro atualizado!");
+      showToast("Registro atualizado.");
     } catch (e) {
-      showToast("Erro ao editar.");
+      console.error(e);
+      showToast("Erro ao atualizar registro.");
     }
   };
 
   const handleDeleteEntry = async (id: string) => {
-    if (!isAdmin()) return showToast("Apenas o admin pode excluir.");
-    if (window.confirm("Deseja excluir este registro permanentemente?")) {
+    if (window.confirm("Deseja realmente excluir este registro?")) {
       try {
         await deleteDoc(doc(db, 'ledger', id));
-        showToast("Registro excluído do Banco.");
+        showToast("Registro removido.");
       } catch (e) {
         showToast("Erro ao excluir.");
       }
     }
   };
 
-  // --- GRÁFICOS E TOTAIS ---
+  // --- LÓGICA DE GRÁFICOS (MÊS DE REFERÊNCIA) ---
   const totals = useMemo(() => {
     const totalOrcado = BUDGET_DATA.reduce((acc, i) => acc + i.value, 0);
     const totalExecutado = ledgerEntries.reduce((acc, i) => acc + i.amount, 0);
-    return { 
-      totalOrcado, 
-      totalExecutado, 
-      totalSaldo: totalOrcado - totalExecutado, 
-      percentTotal: (totalExecutado / totalOrcado) * 100 || 0 
+    return {
+      totalOrcado,
+      totalExecutado,
+      totalSaldo: totalOrcado - totalExecutado,
+      percentTotal: (totalExecutado / totalOrcado) * 100 || 0
     };
   }, [ledgerEntries]);
 
   const chartData = useMemo(() => {
-    const monthlyMap = new Map();
+    const monthlyMap = new Map<string, number>();
     ledgerEntries.forEach(e => {
+      // Busca dados do campo 'date' (Mês de Referência)
       const parts = e.date.split('/');
       if (parts.length === 3) {
-        const key = `${parts[1]}/${parts[2]}`;
-        monthlyMap.set(key, (monthlyMap.get(key) || 0) + e.amount);
+        const label = `${parts[1]}/${parts[2]}`;
+        monthlyMap.set(label, (monthlyMap.get(label) || 0) + e.amount);
       }
     });
+
+    const categories = [...new Set(BUDGET_DATA.map(i => i.type))];
     return {
-      category: { labels: [], previsto: [], executado: [] }, // Simplificado para brevidade
+      category: { 
+        labels: categories, 
+        previsto: categories.map(c => BUDGET_DATA.filter(i => i.type === c).reduce((acc, i) => acc + i.value, 0)),
+        executado: categories.map(c => ledgerEntries.filter(e => e.category === c).reduce((acc, e) => acc + e.amount, 0))
+      },
       month: { labels: Array.from(monthlyMap.keys()), executado: Array.from(monthlyMap.values()) },
       group: { labels: [], previsto: [], executado: [] },
       stage: { labels: [], previsto: [], executado: [] }
     };
   }, [ledgerEntries]);
 
-  if (!isAuthReady) return <div>Carregando...</div>;
+  if (!isAuthReady) return <div className="min-h-screen flex items-center justify-center bg-slate-50">Iniciando...</div>;
   if (!user && !isDemoMode) return <Login onDemoMode={() => setIsDemoMode(true)} />;
 
   return (
     <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-end mb-4 gap-4 items-center">
-          <span className="text-xs font-bold text-slate-500">{user?.email}</span>
-          <button onClick={() => signOut(auth)} className="text-red-500 text-xs font-bold">SAIR</button>
+          <div className="flex items-center gap-2 text-slate-500 bg-white px-3 py-1 rounded-full border text-xs font-bold">
+             <UserIcon size={12} /> {user?.email || 'Modo Visualização'}
+          </div>
+          <button onClick={() => signOut(auth)} className="text-red-600 text-xs font-bold hover:bg-red-50 p-1 px-3 rounded-full transition-all">Sair</button>
         </div>
 
         <Header 
-          onClear={() => isAdmin() && showToast("Limpeza iniciada...")} 
-          onExportCSV={handleExportCSV} 
-          onExportExcel={handleExportExcel} 
-          onExportAudit={() => showToast("Auditoria em desenvolvimento...")} 
+          onExportCSV={handleExportCSV}
+          onClear={() => {}} // Função desativada conforme solicitado
+          onExportExcel={() => {}} // Função desativada conforme solicitado
+          onExportAudit={() => {}} // Função desativada conforme solicitado
         />
 
         <div className="mb-6 flex gap-3">
-          <button onClick={() => setActiveTab('entry')} className={`px-4 py-2 rounded-xl font-bold ${activeTab === 'entry' ? 'bg-[#00735C] text-white' : 'bg-white border'}`}>
+          <button onClick={() => setActiveTab('entry')} className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'entry' ? 'bg-[#00735C] text-white shadow-lg shadow-[#00735C]/20' : 'bg-white text-[#00735C] border'}`}>
             Incluir Registros
           </button>
-          <button onClick={() => setActiveTab('report')} className={`px-4 py-2 rounded-xl font-bold ${activeTab === 'report' ? 'bg-[#00735C] text-white' : 'bg-white border'}`}>
+          <button onClick={() => setActiveTab('report')} className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'report' ? 'bg-[#00735C] text-white shadow-lg shadow-[#00735C]/20' : 'bg-white text-[#00735C] border'}`}>
             Ambiente do Relatório
           </button>
         </div>
@@ -193,11 +197,16 @@ export default function App() {
           <ExpenseForm onAdd={handleAddEntry} showToast={showToast} />
         ) : (
           <div className="space-y-8">
-            <SummaryCards {...totals} totalRecords={ledgerEntries.length} lastAudit="-" criticalItems={0} />
+            <SummaryCards 
+              {...totals} 
+              totalRecords={ledgerEntries.length} 
+              lastAudit="-" 
+              criticalItems={0} 
+            />
             <Charts categoryData={chartData.category} monthData={chartData.month} groupData={chartData.group} stageData={chartData.stage} />
             <Ledger 
               entries={ledgerEntries} 
-              onEdit={setEditingEntry} 
+              onEdit={(entry) => setEditingEntry(entry)} 
               onDelete={handleDeleteEntry} 
               onStatusChange={() => {}} 
             />
@@ -211,9 +220,11 @@ export default function App() {
           isOpen={true} 
           onClose={() => setEditingEntry(null)} 
           entry={editingEntry} 
-          onSave={handleUpdateEntry} 
+          onSave={handleUpdateEntry}
+          getSpentForItem={(code, id) => ledgerEntries.filter(e => e.itemCode === code && e.id !== id).reduce((acc, e) => acc + e.amount, 0)}
         />
       )}
+
       <Toast message={toast.message} isVisible={toast.isVisible} />
     </div>
   );
