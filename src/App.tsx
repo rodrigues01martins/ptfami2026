@@ -195,32 +195,35 @@ export default function App() {
           </button>
         </div>
 
-        {activeTab === 'entry' ? (
-  /* ABA DE INCLUIR REGISTROS - Agora apenas o formulário centralizado */
+       {activeTab === 'entry' ? (
   <div className="max-w-4xl mx-auto">
     <ExpenseForm onAdd={handleAddEntry} showToast={showToast} />
   </div>
 ) : (
-  /* ABA AMBIENTE DO RELATÓRIO - Painéis de análise ficam aqui */
   <div className="space-y-8">
     <SummaryCards 
-      totalOrcado={totals.totalOrcado} 
-      totalExecutado={totals.totalExecutado} 
-      totalSaldo={totals.totalSaldo}
-      percentTotal={totals.percentTotal}
+      {...totals} 
       totalRecords={ledgerEntries.length} 
       lastAudit="-" 
       criticalItems={0} 
     />
     
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <div className="lg:col-span-2">
-        <Charts categoryData={chartData.category} monthData={chartData.month} groupData={chartData.group} stageData={chartData.stage} />
-      </div>
-      <div>
-        {/* O PAINEL DE SALDOS AGORA ESTÁ AQUI NO RELATÓRIO */}
-        <BudgetStatus entries={ledgerEntries} />
-      </div>
+    {/* Gráficos em largura total ou grid */}
+    <div className="grid grid-cols-1 gap-8">
+      <Charts categoryData={chartData.category} monthData={chartData.month} groupData={chartData.group} stageData={chartData.stage} />
+    </div>
+
+    {/* Painel de Saldos abaixo dos gráficos ocupando a largura total */}
+    <BudgetStatus entries={ledgerEntries} />
+
+    <Ledger 
+      entries={ledgerEntries} 
+      onEdit={(entry) => setEditingEntry(entry)} 
+      onDelete={handleDeleteEntry}
+      canDelete={user?.uid === ADMIN_UID} 
+    />
+  </div>
+)}
     </div>
 
     <Ledger 
@@ -242,6 +245,11 @@ export default function App() {
           getSpentForItem={(code, id) => ledgerEntries.filter(e => e.itemCode === code && e.id !== id).reduce((acc, e) => acc + e.amount, 0)}
         />
       )}
+
+      <Toast message={toast.message} isVisible={toast.isVisible} />
+    </div>
+  );
+}
 
       <Toast message={toast.message} isVisible={toast.isVisible} />
     </div>
