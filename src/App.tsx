@@ -196,34 +196,41 @@ export default function App() {
         </div>
 
         {activeTab === 'entry' ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
-              <ExpenseForm onAdd={handleAddEntry} showToast={showToast} />
-            </div>
-            <div>
-              <BudgetStatus entries={ledgerEntries} />
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-8">
-            <SummaryCards 
-              totalOrcado={totals.totalOrcado} 
-              totalExecutado={totals.totalExecutado} 
-              totalSaldo={totals.totalSaldo}
-              percentTotal={totals.percentTotal}
-              totalRecords={ledgerEntries.length} 
-              lastAudit="-" 
-              criticalItems={0} 
-            />
-            <Charts categoryData={chartData.category} monthData={chartData.month} groupData={chartData.group} stageData={chartData.stage} />
-            <Ledger 
-              entries={ledgerEntries} 
-              onEdit={(entry) => setEditingEntry(entry)} 
-              onDelete={handleDeleteEntry}
-              canDelete={user?.uid === ADMIN_UID} 
-            />
-          </div>
-        )}
+  /* ABA DE INCLUIR REGISTROS - Agora apenas o formulário centralizado */
+  <div className="max-w-4xl mx-auto">
+    <ExpenseForm onAdd={handleAddEntry} showToast={showToast} />
+  </div>
+) : (
+  /* ABA AMBIENTE DO RELATÓRIO - Painéis de análise ficam aqui */
+  <div className="space-y-8">
+    <SummaryCards 
+      totalOrcado={totals.totalOrcado} 
+      totalExecutado={totals.totalExecutado} 
+      totalSaldo={totals.totalSaldo}
+      percentTotal={totals.percentTotal}
+      totalRecords={ledgerEntries.length} 
+      lastAudit="-" 
+      criticalItems={0} 
+    />
+    
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="lg:col-span-2">
+        <Charts categoryData={chartData.category} monthData={chartData.month} groupData={chartData.group} stageData={chartData.stage} />
+      </div>
+      <div>
+        {/* O PAINEL DE SALDOS AGORA ESTÁ AQUI NO RELATÓRIO */}
+        <BudgetStatus entries={ledgerEntries} />
+      </div>
+    </div>
+
+    <Ledger 
+      entries={ledgerEntries} 
+      onEdit={(entry) => setEditingEntry(entry)} 
+      onDelete={handleDeleteEntry}
+      canDelete={user?.uid === ADMIN_UID} 
+    />
+  </div>
+)}
       </div>
 
       {editingEntry && (
