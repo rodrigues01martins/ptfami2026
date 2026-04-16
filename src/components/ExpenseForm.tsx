@@ -1,193 +1,81 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { PlusCircle, Calendar, Tag, Building2, FileText, DollarSign, AlignLeft } from 'lucide-react';
 import { BUDGET_DATA } from '../constants';
-import { fmt, fileToDataUrl } from '../lib/utils';
-import { BudgetItem } from '../types';
 
 interface ExpenseFormProps {
-  onAdd: (entry: any) => void;
-  showToast: (msg: string) => void;
+  onAdd: (data: any) => void;
+  showToast: (message: string) => void;
 }
 
 export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd, showToast }) => {
-  const [itemCode, setItemCode] = useState('');
-  const [nf, setNf] = useState('');
-  const [supplier, setSupplier] = useState('');
-  const [description, setDescription] = useState('');
-  const [amount, setAmount] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [referenceMonth, setReferenceMonth] = useState(new Date().toISOString().slice(0, 7));
-  const [file, setFile] = useState<File | null>(null);
-  const [fileError, setFileError] = useState(false);
+  const [formData, setFormData] = useState({
+    itemCode: '',
+    supplier: '',
+    nf: '',
+    amount: '',
+    date: new Date().toLocaleDateString('pt-BR'),
+    description: ''
+  });
 
-  const selectedItem = BUDGET_DATA.find(i => i.id === itemCode);
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!itemCode || !description || !amount || !file) {
-      if (!file) setFileError(true);
-      showToast('Preencha todos os campos obrigatórios e anexe o PDF.');
+    if (!formData.itemCode || !formData.amount || !formData.date) {
+      showToast("Preencha Item, Valor e Data da Despesa.");
       return;
     }
-
-    if (file.type !== 'application/pdf') {
-      setFileError(true);
-      showToast('O arquivo anexado precisa estar em formato PDF.');
-      return;
-    }
-
-    try {
-      const documentData = await fileToDataUrl(file);
-      onAdd({
-        itemCode,
-        nf,
-        supplier,
-        description,
-        amount: parseFloat(amount),
-        date,
-        referenceMonth,
-        documentName: file.name,
-        documentData
-      });
-      
-      // Reset form
-      setItemCode('');
-      setNf('');
-      setSupplier('');
-      setDescription('');
-      setAmount('');
-      setFile(null);
-      setFileError(false);
-    } catch (err) {
-      showToast('Erro ao processar o arquivo PDF.');
-    }
+    onAdd({
+      ...formData,
+      amount: parseFloat(formData.amount.replace(',', '.')),
+    });
+    setFormData({ itemCode: '', supplier: '', nf: '', amount: '', date: new Date().toLocaleDateString('pt-BR'), description: '' });
   };
 
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-      <h3 className="text-lg font-bold text-slate-900 mb-4">Novo Lançamento</h3>
-      <form className="space-y-4" onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 max-w-4xl mx-auto">
+      <div className="flex items-center gap-3 mb-8 border-b border-slate-50 pb-6">
+        <div className="bg-[#00735C]/10 p-2.5 rounded-xl text-[#00735C]"><PlusCircle size={24} /></div>
         <div>
-          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Código do Item</label>
-          <select 
-            className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#00735C] outline-none border text-sm appearance-none bg-slate-50"
-            value={itemCode}
-            onChange={(e) => setItemCode(e.target.value)}
-            required
-          >
+          <h2 className="text-xl font-bold text-slate-800">Novo Lançamento</h2>
+          <p className="text-sm text-slate-500">Gestão de Despesas SEDS</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="md:col-span-2 space-y-2">
+          <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><Tag size={14} /> Código do Item</label>
+          <select value={formData.itemCode} onChange={(e) => setFormData({ ...formData, itemCode: e.target.value })} className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-[#00735C]">
             <option value="">Selecione um item do plano...</option>
-            {BUDGET_DATA.map(item => (
-              <option key={item.id} value={item.id}>{item.id} - {item.desc}</option>
-            ))}
+            {BUDGET_DATA.map((item) => <option key={item.id} value={item.id}>{item.id} - {item.description}</option>)}
           </select>
         </div>
 
-        {selectedItem && (
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs space-y-1">
-            <div className="flex justify-between gap-2">
-              <span className="text-slate-500">Categoria automática</span>
-              <strong>{selectedItem.type}</strong>
-            </div>
-            <div className="flex justify-between gap-2">
-              <span className="text-slate-500">Previsto no item</span>
-              <strong>{fmt.format(selectedItem.value)}</strong>
-            </div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">NF / Documento</label>
-            <input 
-              className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#00735C] outline-none border text-sm"
-              value={nf}
-              onChange={(e) => setNf(e.target.value)}
-              placeholder="Ex: NF 456"
-              type="text"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Fornecedor</label>
-            <input 
-              className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#00735C] outline-none border text-sm"
-              value={supplier}
-              onChange={(e) => setSupplier(e.target.value)}
-              placeholder="Ex: Papelaria Central"
-              type="text"
-            />
-          </div>
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><FileText size={14} /> NF / Documento</label>
+          <input type="text" placeholder="Ex: NF 456" value={formData.nf} onChange={(e) => setFormData({ ...formData, nf: e.target.value })} className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm" />
         </div>
 
-        <div>
-          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Descrição Detalhada</label>
-          <input 
-            className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#00735C] outline-none border text-sm"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Ex: Toner para impressora do setor técnico"
-            required
-            type="text"
-          />
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><Building2 size={14} /> Fornecedor</label>
+          <input type="text" placeholder="Ex: Papelaria Central" value={formData.supplier} onChange={(e) => setFormData({ ...formData, supplier: e.target.value })} className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm" />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Valor do Documento (R$)</label>
-            <input 
-              className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#00735C] outline-none border text-sm font-bold"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="0,00"
-              required
-              step="0.01"
-              min="0.01"
-              type="number"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Data do Lançamento</label>
-            <input 
-              className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#00735C] outline-none border text-sm bg-white"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              required
-              type="date"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Mes de Referencia</label>
-            <input 
-              className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#00735C] outline-none border text-sm bg-white"
-              value={referenceMonth}
-              onChange={(e) => setReferenceMonth(e.target.value)}
-              type="month"
-            />
-          </div>
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><DollarSign size={14} /> Valor (R$)</label>
+          <input type="text" placeholder="0,00" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm font-bold text-[#00735C]" />
         </div>
 
-        <div>
-          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Incluir Documentação (PDF)</label>
-          <input 
-            accept=".pdf"
-            className={`w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#00735C] outline-none border text-sm bg-white ${fileError ? 'border-red-400 bg-red-50' : ''}`}
-            onChange={(e) => {
-              const f = e.target.files?.[0] || null;
-              setFile(f);
-              setFileError(false);
-            }}
-            type="file"
-          />
-          <p className={`mt-2 text-xs ${fileError ? 'text-red-600 font-semibold' : 'text-slate-500'}`}>
-            {file ? `Arquivo selecionado: ${file.name}` : 'Anexe um arquivo em PDF para registrar o lançamento.'}
-          </p>
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><Calendar size={14} /> Data da Despesa</label>
+          <input type="text" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm" />
         </div>
 
-        <button 
-          className="w-full bg-[#00735C] hover:bg-[#005b49] text-white font-bold py-3.5 rounded-xl shadow-md transition-all active:scale-[0.98]"
-          type="submit"
-        >
-          Incluir Registros
-        </button>
-      </form>
-    </div>
+        <div className="md:col-span-2 space-y-2">
+          <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><AlignLeft size={14} /> Descrição</label>
+          <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={2} className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm" />
+        </div>
+      </div>
+
+      <button type="submit" className="w-full mt-8 bg-[#00735C] text-white font-bold py-4 rounded-2xl shadow-lg transition-all">Incluir Registro</button>
+    </form>
   );
 };
