@@ -46,18 +46,13 @@ export default function App() {
   // Busca de dados em tempo real
   useEffect(() => {
     if (!user && !isDemoMode) return;
-    
     const q = query(collection(db, 'ledger'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id
-      } as LedgerEntry));
+      const data = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as LedgerEntry));
       setLedgerEntries(data);
     }, (error) => {
       console.error("Erro Firestore:", error);
     });
-
     return () => unsubscribe();
   }, [user, isDemoMode]);
 
@@ -66,78 +61,59 @@ export default function App() {
     setTimeout(() => setToast(prev => ({ ...prev, isVisible: false })), 3000);
   };
 
-  // --- FUNÇÃO DE EXPORTAÇÃO CSV (COMPLETA E CORRIGIDA) ---
+  // --- FUNÇÃO DE EXPORTAÇÃO CSV ---
   const handleExportCSV = () => {
-    if (ledgerEntries.length === 0) return showToast("Não há dados para exportar.");
-    
-    // Cabeçalho com todos os campos solicitados
-    const headers = "Data Lancamento;Data Despesa;Item;Fornecedor;NF;Valor;Categoria;Descricao;Status\n";
-    
+    if (ledgerEntries.length === 0) return showToast("Não há dados.");
+    const headers = "Data Lancamento;Data Despesa;Item;Fornecedor;NF;Valor;Categoria;Descricao\n";
     const rows = ledgerEntries.map(e => {
-      const dataLancamento = e.createdAt ? new Date(e.createdAt).toLocaleDateString('pt-BR') : '---';
-      const valorExcel = e.amount.toString().replace('.', ','); // Melhora compatibilidade com Excel
-      return `${dataLancamento};${e.date};${e.itemCode};${e.supplier};${e.nf || ''};${valorExcel};${e.category};${e.description || ''};${e.approvalStatus || 'Pendente'}`;
+      const lancamento = e.createdAt ? new Date(e.createdAt).toLocaleDateString('pt-BR') : '---';
+      const valorExcel = e.amount.toString().replace('.', ',');
+      return `${lancamento};${e.date};${e.itemCode};${e.supplier};${e.nf || ''};${valorExcel};${e.category};${e.description || ''}`;
     }).join("\n");
-    
     const blob = new Blob(["\ufeff" + headers + rows], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `Relatorio_SEDS_FAMI_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`);
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', `Relatorio_SEDS_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`);
     link.click();
-    showToast("Exportação CSV concluída.");
   };
 
-  // --- OPERAÇÕES DE BANCO DE DADOS ---
+  // --- OPERAÇÕES CRUD ---
   const handleAddEntry = async (data: any) => {
     try {
       const item = BUDGET_DATA.find(i => i.id === data.itemCode);
-      const newEntry = {
+      await addDoc(collection(db, 'ledger'), {
         ...data,
         category: item?.type || 'Outros',
-        createdAt: new Date().toISOString(), // DATA AUTOMÁTICA DE LANÇAMENTO
+        createdAt: new Date().toISOString(),
         authorUid: user?.uid || 'demo-user'
-      };
-      await addDoc(collection(db, 'ledger'), newEntry);
-      showToast("Registro incluído com sucesso!");
+      });
+      showToast("Registro salvo!");
       setActiveTab('report');
-    } catch (e) {
-      showToast("Erro ao gravar no banco.");
-    }
+    } catch (e) { showToast("Erro ao gravar."); }
   };
 
   const handleUpdateEntry = async (updated: LedgerEntry) => {
     try {
       const { id, ...dataToSave } = updated;
-      const entryRef = doc(db, 'ledger', id);
-      await updateDoc(entryRef, dataToSave);
+      await updateDoc(doc(db, 'ledger', id), dataToSave);
       setEditingEntry(null);
-      showToast("Registro atualizado.");
-    } catch (e) {
-      showToast("Erro ao atualizar registro.");
-    }
+      showToast("Atualizado.");
+    } catch (e) { showToast("Erro ao atualizar."); }
   };
 
   const handleDeleteEntry = async (id: string) => {
-    // Trava de segurança no nível da função
-    if (user?.uid !== ADMIN_UID) {
-      showToast("Acesso negado: Apenas o administrador pode excluir.");
-      return;
-    }
-
-    if (window.confirm("Deseja realmente excluir este registro?")) {
+    if (user?.uid !== ADMIN_UID) return showToast("Acesso negado.");
+    if (window.confirm("Deseja realmente excluir?")) {
       try {
         await deleteDoc(doc(db, 'ledger', id));
-        showToast("Registro removido.");
-      } catch (e) {
-        showToast("Erro ao excluir.");
-      }
+        showToast("Removido.");
+      } catch (e) { showToast("Erro ao excluir."); }
     }
   };
 
   // --- LÓGICA DE TOTAIS E GRÁFICOS ---
   const totals = useMemo(() => {
-    const totalOrcado = BUDGET_DATA.reduce((acc, i) => acc + (i.value || i.originalValue || 0), 0);
+    const totalOrcado = BUDGET_DATA.reduce((acc, i) => acc + (i.value || 0), 0);
     const totalExecutado = ledgerEntries.reduce((acc, i) => acc + i.amount, 0);
     return {
       totalOrcado,
@@ -150,19 +126,17 @@ export default function App() {
   const chartData = useMemo(() => {
     const monthlyMap = new Map<string, number>();
     ledgerEntries.forEach(e => {
-      // Agrupa por Data da Despesa (extraindo Mês/Ano)
       const parts = e.date.split('/');
       if (parts.length === 3) {
         const label = `${parts[1]}/${parts[2]}`;
         monthlyMap.set(label, (monthlyMap.get(label) || 0) + e.amount);
       }
     });
-
     const categories = [...new Set(BUDGET_DATA.map(i => i.type))];
     return {
       category: { 
         labels: categories, 
-        previsto: categories.map(c => BUDGET_DATA.filter(i => i.type === c).reduce((acc, i) => acc + (i.value || i.originalValue || 0), 0)),
+        previsto: categories.map(c => BUDGET_DATA.filter(i => i.type === c).reduce((acc, i) => acc + (i.value || 0), 0)),
         executado: categories.map(c => ledgerEntries.filter(e => e.category === c).reduce((acc, e) => acc + e.amount, 0))
       },
       month: { labels: Array.from(monthlyMap.keys()).sort(), executado: Array.from(monthlyMap.values()) },
@@ -174,9 +148,11 @@ export default function App() {
   if (!isAuthReady) return <div className="min-h-screen flex items-center justify-center bg-slate-50 font-bold text-[#00735C]">Iniciando SEDS...</div>;
   if (!user && !isDemoMode) return <Login onDemoMode={() => setIsDemoMode(true)} />;
 
+  // --- O BLOCO QUE VOCÊ ESTAVA EM DÚVIDA COMEÇA AQUI ---
   return (
     <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
+        {/* Topo com Usuário e Sair */}
         <div className="flex justify-end mb-4 gap-4 items-center">
           <div className="flex items-center gap-2 text-slate-500 bg-white px-3 py-1 rounded-full border text-xs font-bold">
              <UserIcon size={12} /> {user?.email || 'Modo Visualização'}
@@ -186,54 +162,39 @@ export default function App() {
 
         <Header onExportCSV={handleExportCSV} />
 
-        <div className="mb-6 flex gap-3">
-          <button onClick={() => setActiveTab('entry')} className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'entry' ? 'bg-[#00735C] text-white shadow-lg shadow-[#00735C]/20' : 'bg-white text-[#00735C] border'}`}>
+        <div className="mb-8 flex gap-3">
+          <button onClick={() => setActiveTab('entry')} className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'entry' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}>
             Incluir Registros
           </button>
-          <button onClick={() => setActiveTab('report')} className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'report' ? 'bg-[#00735C] text-white shadow-lg shadow-[#00735C]/20' : 'bg-white text-[#00735C] border'}`}>
+          <button onClick={() => setActiveTab('report')} className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'report' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}>
             Ambiente do Relatório
           </button>
         </div>
 
-       {activeTab === 'entry' ? (
-  <div className="max-w-4xl mx-auto">
-    <ExpenseForm onAdd={handleAddEntry} showToast={showToast} />
-  </div>
-) : (
-  <div className="space-y-8">
-    <SummaryCards 
-      {...totals} 
-      totalRecords={ledgerEntries.length} 
-      lastAudit="-" 
-      criticalItems={0} 
-    />
-    
-    {/* Gráficos em largura total ou grid */}
-    <div className="grid grid-cols-1 gap-8">
-      <Charts categoryData={chartData.category} monthData={chartData.month} groupData={chartData.group} stageData={chartData.stage} />
-    </div>
+        {activeTab === 'entry' ? (
+          <div className="max-w-4xl mx-auto">
+            <ExpenseForm onAdd={handleAddEntry} showToast={showToast} />
+          </div>
+        ) : (
+          <div className="space-y-10">
+            <SummaryCards {...totals} totalRecords={ledgerEntries.length} lastAudit="-" criticalItems={0} />
+            
+            <div className="w-full">
+              <Charts categoryData={chartData.category} monthData={chartData.month} groupData={chartData.group} stageData={chartData.stage} />
+            </div>
 
-    {/* Painel de Saldos abaixo dos gráficos ocupando a largura total */}
-    <BudgetStatus entries={ledgerEntries} />
+            <div className="w-full">
+               <BudgetStatus entries={ledgerEntries} />
+            </div>
 
-    <Ledger 
-      entries={ledgerEntries} 
-      onEdit={(entry) => setEditingEntry(entry)} 
-      onDelete={handleDeleteEntry}
-      canDelete={user?.uid === ADMIN_UID} 
-    />
-  </div>
-)}
-    </div>
-
-    <Ledger 
-      entries={ledgerEntries} 
-      onEdit={(entry) => setEditingEntry(entry)} 
-      onDelete={handleDeleteEntry}
-      canDelete={user?.uid === ADMIN_UID} 
-    />
-  </div>
-)}
+            <Ledger 
+              entries={ledgerEntries} 
+              onEdit={(entry) => setEditingEntry(entry)} 
+              onDelete={handleDeleteEntry}
+              canDelete={user?.uid === ADMIN_UID} 
+            />
+          </div>
+        )}
       </div>
 
       {editingEntry && (
@@ -245,11 +206,6 @@ export default function App() {
           getSpentForItem={(code, id) => ledgerEntries.filter(e => e.itemCode === code && e.id !== id).reduce((acc, e) => acc + e.amount, 0)}
         />
       )}
-
-      <Toast message={toast.message} isVisible={toast.isVisible} />
-    </div>
-  );
-}
 
       <Toast message={toast.message} isVisible={toast.isVisible} />
     </div>
