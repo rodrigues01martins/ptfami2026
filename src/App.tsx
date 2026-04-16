@@ -6,22 +6,21 @@ import {
 } from 'firebase/firestore';
 import { auth, db } from './firebase';
 
-// Componentes
+// Importação dos seus componentes
 import { Header } from './components/Header';
 import { SummaryCards } from './components/SummaryCards';
 import { Charts } from './components/Charts';
 import { ExpenseForm } from './components/ExpenseForm';
 import { Ledger } from './components/Ledger';
-import { BudgetStatus } from './components/BudgetStatus';
 import { EditModal } from './components/EditModal';
 import { Toast } from './components/Toast';
 import { Login } from './components/Login';
 
-// Constantes e Utils
 import { BUDGET_DATA } from './constants';
 import { LedgerEntry } from './types';
-import { normalizeDateInput } from './lib/utils';
-import { LogOut, User as UserIcon } from 'lucide-react';
+
+// SEU UID DE ADMINISTRADOR PARA TRAVA DE EXCLUSÃO
+const ADMIN_UID = "lba3ydI19fPRDIXF09zXFI7oV8x2";
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -32,7 +31,7 @@ export default function App() {
   const [toast, setToast] = useState({ message: '', isVisible: false });
   const [editingEntry, setEditingEntry] = useState<LedgerEntry | null>(null);
 
-  // Monitor de Autenticação
+  // Monitoramento de Autenticação
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -41,22 +40,17 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Busca de dados em tempo real (Sincronizado com Firestore)
+  // Busca de dados no Firestore (Ordenado por data de lançamento)
   useEffect(() => {
     if (!user && !isDemoMode) return;
-    
     const q = query(collection(db, 'ledger'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id // Garante que o ID do Firestore seja usado para Edição/Exclusão
+      const data = snapshot.docs.map(doc => ({ 
+        ...doc.data(), 
+        id: doc.id 
       } as LedgerEntry));
       setLedgerEntries(data);
-    }, (error) => {
-      console.error("Erro Firestore:", error);
-      showToast("Erro ao carregar dados do banco.");
     });
-
     return () => unsubscribe();
   }, [user, isDemoMode]);
 
@@ -65,60 +59,67 @@ export default function App() {
     setTimeout(() => setToast(prev => ({ ...prev, isVisible: false })), 3000);
   };
 
-  // --- FUNÇÃO ÚNICA DE EXPORTAÇÃO ---
+  const handleLogout = () => signOut(auth);
+
+  // --- EXPORTAÇÃO CSV CORRIGIDA E COMPLETA ---
   const handleExportCSV = () => {
-    if (ledgerEntries.length === 0) return showToast("Não há dados para exportar.");
-    const headers = "Mês Referência;Item;Fornecedor;NF;Valor;Categoria\n";
-    const rows = ledgerEntries.map(e => 
-      `${e.date};${e.itemCode};${e.supplier};${e.nf || ''};${e.amount};${e.category}`
-    ).join("\n");
+    if (ledgerEntries.length === 0) return showToast("Sem dados para exportar.");
     
-    const blob = new Blob(["\ufeff" + rows], { type: 'text/csv;charset=utf-8;' });
+    // Cabeçalhos com nomes claros e todos os campos
+    const headers = "Data Lancamento;Data Despesa;Item;Fornecedor;NF;Valor;Categoria;Descricao;Status\n";
+    
+    const rows = ledgerEntries.map(e => {
+      const dataLancamento = new Date(e.createdAt).toLocaleDateString('pt-BR');
+      const valorFormatado = e.amount.toString().replace('.', ',');
+      return `${dataLancamento};${e.date};${e.itemCode};${e.supplier};${e.nf || ''};${valorFormatado};${e.category};${e.description || ''};${e.approvalStatus || 'Pendente'}`;
+    }).join("\n");
+    
+    const blob = new Blob(["\ufeff" + headers + rows], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `Registros_SEDS_${new Date().toLocaleDateString()}.csv`);
+    link.setAttribute('download', `Relatorio_SEDS_FAMI_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`);
     link.click();
-    showToast("Exportação CSV concluída.");
   };
 
-  // --- OPERAÇÕES DE BANCO DE DADOS ---
-  const handleAddEntry = async (data: any) => {
-    if (!user && !isDemoMode) return;
+  // --- ADICIONAR REGISTRO ---
+  const handleAddEntry = async (data: Omit<LedgerEntry, 'id' | 'createdAt' | 'authorUid' | 'category'>) => {
     try {
       const item = BUDGET_DATA.find(i => i.id === data.itemCode);
       const newEntry = {
         ...data,
         category: item?.type || 'Outros',
-        stage: item?.stage || '',
-        group: item?.group || '',
-        date: normalizeDateInput(data.date), // Mês de Referência
-        createdAt: new Date().toISOString(), // Data de Lançamento (Sistema)
+        createdAt: new Date().toISOString(), // DATA AUTOMÁTICA
         authorUid: user?.uid || 'demo-user'
       };
       await addDoc(collection(db, 'ledger'), newEntry);
       showToast("Registro incluído com sucesso!");
       setActiveTab('report');
     } catch (e) {
-      showToast("Erro ao gravar no banco.");
+      showToast("Erro ao gravar no banco de dados.");
     }
   };
 
-  const handleUpdateEntry = async (updated: LedgerEntry) => {
+  // --- EDITAR REGISTRO ---
+  const handleUpdateEntry = async (id: string, data: Partial<LedgerEntry>) => {
     try {
-      const { id, ...dataToSave } = updated;
-      const entryRef = doc(db, 'ledger', id);
-      await updateDoc(entryRef, dataToSave);
+      const docRef = doc(db, 'ledger', id);
+      await updateDoc(docRef, data);
       setEditingEntry(null);
-      showToast("Registro atualizado.");
+      showToast("Registro atualizado!");
     } catch (e) {
-      console.error(e);
-      showToast("Erro ao atualizar registro.");
+      showToast("Erro ao atualizar.");
     }
   };
 
+  // --- EXCLUIR REGISTRO (COM TRAVA DE ADMIN) ---
   const handleDeleteEntry = async (id: string) => {
-    if (window.confirm("Deseja realmente excluir este registro?")) {
+    if (user?.uid !== ADMIN_UID) {
+      showToast("Acesso negado: Apenas administradores podem excluir.");
+      return;
+    }
+    
+    if (window.confirm("Tem certeza que deseja excluir definitivamente este registro?")) {
       try {
         await deleteDoc(doc(db, 'ledger', id));
         showToast("Registro removido.");
@@ -128,104 +129,125 @@ export default function App() {
     }
   };
 
-  // --- LÓGICA DE GRÁFICOS (MÊS DE REFERÊNCIA) ---
+  // Cálculos de Totais para os Cards
   const totals = useMemo(() => {
-    const totalOrcado = BUDGET_DATA.reduce((acc, i) => acc + i.value, 0);
-    const totalExecutado = ledgerEntries.reduce((acc, i) => acc + i.amount, 0);
+    const totalOrçado = BUDGET_DATA.reduce((acc, curr) => acc + curr.originalValue, 0);
+    const totalExecutado = ledgerEntries.reduce((acc, curr) => acc + curr.amount, 0);
     return {
-      totalOrcado,
+      totalOrçado,
       totalExecutado,
-      totalSaldo: totalOrcado - totalExecutado,
-      percentTotal: (totalExecutado / totalOrcado) * 100 || 0
+      saldo: totalOrçado - totalExecutado
     };
   }, [ledgerEntries]);
 
+  // Lógica de Gráficos (Agrupado por Data da Despesa)
   const chartData = useMemo(() => {
     const monthlyMap = new Map<string, number>();
     ledgerEntries.forEach(e => {
-      // Busca dados do campo 'date' (Mês de Referência)
-      const parts = e.date.split('/');
+      const parts = e.date.split('/'); 
       if (parts.length === 3) {
-        const label = `${parts[1]}/${parts[2]}`;
+        const label = `${parts[1]}/${parts[2]}`; // MM/AAAA
         monthlyMap.set(label, (monthlyMap.get(label) || 0) + e.amount);
       }
     });
 
-    const categories = [...new Set(BUDGET_DATA.map(i => i.type))];
+    const sortedLabels = Array.from(monthlyMap.keys()).sort();
+
     return {
-      category: { 
-        labels: categories, 
-        previsto: categories.map(c => BUDGET_DATA.filter(i => i.type === c).reduce((acc, i) => acc + i.value, 0)),
-        executado: categories.map(c => ledgerEntries.filter(e => e.category === c).reduce((acc, e) => acc + e.amount, 0))
-      },
-      month: { labels: Array.from(monthlyMap.keys()), executado: Array.from(monthlyMap.values()) },
-      group: { labels: [], previsto: [], executado: [] },
-      stage: { labels: [], previsto: [], executado: [] }
+      month: {
+        labels: sortedLabels,
+        executado: sortedLabels.map(l => monthlyMap.get(l) || 0)
+      }
     };
   }, [ledgerEntries]);
 
-  if (!isAuthReady) return <div className="min-h-screen flex items-center justify-center bg-slate-50">Iniciando...</div>;
+  if (!isAuthReady) return null;
   if (!user && !isDemoMode) return <Login onDemoMode={() => setIsDemoMode(true)} />;
 
   return (
     <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-end mb-4 gap-4 items-center">
-          <div className="flex items-center gap-2 text-slate-500 bg-white px-3 py-1 rounded-full border text-xs font-bold">
-             <UserIcon size={12} /> {user?.email || 'Modo Visualização'}
+        <Header onExportCSV={handleExportCSV} />
+        
+        {/* Navegação por Abas */}
+        <div className="mb-8 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+          <div className="bg-white p-1.5 rounded-2xl shadow-sm border border-slate-200 flex w-full sm:w-auto">
+            <button
+              onClick={() => setActiveTab('entry')}
+              className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${
+                activeTab === 'entry' 
+                ? 'bg-[#00735C] text-white shadow-md' 
+                : 'text-slate-500 hover:bg-slate-50'
+              }`}
+            >
+              Incluir Registro
+            </button>
+            <button
+              onClick={() => setActiveTab('report')}
+              className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${
+                activeTab === 'report' 
+                ? 'bg-[#00735C] text-white shadow-md' 
+                : 'text-slate-500 hover:bg-slate-50'
+              }`}
+            >
+              Ambiente de Relatório
+            </button>
           </div>
-          <button onClick={() => signOut(auth)} className="text-red-600 text-xs font-bold hover:bg-red-50 p-1 px-3 rounded-full transition-all">Sair</button>
-        </div>
 
-        <Header 
-          onExportCSV={handleExportCSV}
-          onClear={() => {}} // Função desativada conforme solicitado
-          onExportExcel={() => {}} // Função desativada conforme solicitado
-          onExportAudit={() => {}} // Função desativada conforme solicitado
-        />
-
-        <div className="mb-6 flex gap-3">
-          <button onClick={() => setActiveTab('entry')} className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'entry' ? 'bg-[#00735C] text-white shadow-lg shadow-[#00735C]/20' : 'bg-white text-[#00735C] border'}`}>
-            Incluir Registros
-          </button>
-          <button onClick={() => setActiveTab('report')} className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'report' ? 'bg-[#00735C] text-white shadow-lg shadow-[#00735C]/20' : 'bg-white text-[#00735C] border'}`}>
-            Ambiente do Relatório
+          <button
+            onClick={handleLogout}
+            className="text-slate-400 hover:text-red-600 font-bold text-sm px-4 py-2 transition-colors"
+          >
+            Sair do Sistema
           </button>
         </div>
 
         {activeTab === 'entry' ? (
-          <ExpenseForm onAdd={handleAddEntry} showToast={showToast} />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <ExpenseForm onAdd={handleAddEntry} showToast={showToast} />
+            </div>
+            <div>
+              <BudgetStatus totalOrçado={totals.totalOrçado} totalExecutado={totals.totalExecutado} />
+            </div>
+          </div>
         ) : (
           <div className="space-y-8">
             <SummaryCards 
-              {...totals} 
-              totalRecords={ledgerEntries.length} 
-              lastAudit="-" 
-              criticalItems={0} 
+              totalOrçado={totals.totalOrçado} 
+              totalExecutado={totals.totalExecutado} 
+              saldo={totals.saldo}
+              totalRecords={ledgerEntries.length}
             />
-            <Charts categoryData={chartData.category} monthData={chartData.month} groupData={chartData.group} stageData={chartData.stage} />
+            
+            <Charts 
+              monthData={chartData.month} 
+              categoryData={{ labels: [], values: [] }} // Pode expandir conforme precisar
+            />
+            
             <Ledger 
               entries={ledgerEntries} 
-              onEdit={(entry) => setEditingEntry(entry)} 
-              onDelete={handleDeleteEntry} 
-              onStatusChange={() => {}} 
+              onEdit={setEditingEntry} 
+              onDelete={handleDeleteEntry}
+              canDelete={user?.uid === ADMIN_UID} // ENVIA A PERMISSÃO PARA O COMPONENTE
             />
-            <BudgetStatus entries={ledgerEntries} />
           </div>
         )}
       </div>
 
       {editingEntry && (
         <EditModal 
-          isOpen={true} 
-          onClose={() => setEditingEntry(null)} 
           entry={editingEntry} 
-          onSave={handleUpdateEntry}
-          getSpentForItem={(code, id) => ledgerEntries.filter(e => e.itemCode === code && e.id !== id).reduce((acc, e) => acc + e.amount, 0)}
+          onClose={() => setEditingEntry(null)} 
+          onSave={handleUpdateEntry} 
         />
       )}
 
-      <Toast message={toast.message} isVisible={toast.isVisible} />
+      <Toast 
+        message={toast.message} 
+        isVisible={toast.isVisible} 
+        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))} 
+      />
     </div>
   );
 }
