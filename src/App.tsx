@@ -182,17 +182,17 @@ export default function App() {
             <div className="w-full">
               <Charts categoryData={chartData.category} monthData={chartData.month} groupData={chartData.group} stageData={chartData.stage} />
             </div>
-
-            <div className="w-full">
-               <BudgetStatus entries={ledgerEntries} />
-            </div>
-
-            <Ledger 
+              
+              <Ledger 
               entries={ledgerEntries} 
               onEdit={(entry) => setEditingEntry(entry)} 
               onDelete={handleDeleteEntry}
               canDelete={user?.uid === ADMIN_UID} 
             />
+            <div className="w-full">
+               <BudgetStatus entries={ledgerEntries} />
+            </div>
+           
           </div>
         )}
       </div>
