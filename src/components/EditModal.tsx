@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X } from 'lucide-react';
+import { X, Upload } from 'lucide-react';
 import { LedgerEntry } from '../types';
 import { BUDGET_DATA } from '../constants';
 import { fmt, formatDateForInput, fileToDataUrl } from '../lib/utils';
@@ -20,7 +20,6 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, on
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState('');
-  const [referenceMonth, setReferenceMonth] = useState('');
   const [file, setFile] = useState<File | null>(null);
 
   useEffect(() => {
@@ -31,7 +30,6 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, on
       setDescription(entry.description);
       setAmount(entry.amount.toString());
       setDate(formatDateForInput(entry.date));
-      setReferenceMonth(entry.referenceMonth);
       setFile(null);
     }
   }, [entry]);
@@ -65,7 +63,6 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, on
       description,
       amount: parseFloat(amount),
       date: date.split('-').reverse().join('/'),
-      referenceMonth,
       documentName,
       documentData,
       updatedAt: new Date().toISOString()
@@ -93,6 +90,7 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, on
               <h3 className="text-lg font-bold text-slate-900">Editar lançamento</h3>
               <button className="text-slate-400 hover:text-slate-700" onClick={onClose}><X size={20} /></button>
             </div>
+            
             <form className="p-6 space-y-4" onSubmit={handleSubmit}>
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Código do Item</label>
@@ -107,7 +105,7 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, on
                   ))}
                 </select>
               </div>
-              
+
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs space-y-1">
                 <div className="flex justify-between gap-2">
                   <span className="text-slate-500">Categoria automática</span>
@@ -159,7 +157,7 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, on
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Valor (R$)</label>
                   <input 
@@ -181,41 +179,36 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, on
                     type="date"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Mês de Referência</label>
-                  <input 
-                    className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#00735C] outline-none border text-sm bg-white"
-                    value={referenceMonth}
-                    onChange={(e) => setReferenceMonth(e.target.value)}
-                    type="month"
-                  />
-                </div>
               </div>
 
-              <div>
-                <div className="text-xs text-slate-500 mb-2">Documento atual: <span className="font-semibold text-slate-700">{entry.documentName || 'Nenhum'}</span></div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Substituir Documentação (PDF)</label>
+              <div className="space-y-2">
+                <div className="text-xs text-slate-500 mb-2">
+                  Documento atual: <span className="font-semibold text-slate-700">{entry.documentName || 'Nenhum'}</span>
+                </div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                  <Upload size={12} /> Substituir Documentação (PDF)
+                </label>
                 <input 
-                  accept=".pdf"
-                  className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#00735C] outline-none border text-sm bg-white"
+                  type="file" 
+                  accept="application/pdf"
                   onChange={(e) => setFile(e.target.files?.[0] || null)}
-                  type="file"
+                  className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-[#00735C]/10 file:text-[#00735C] cursor-pointer bg-slate-50 rounded-xl"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-50">
                 <button 
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50"
-                  onClick={onClose}
                   type="button"
+                  onClick={onClose}
+                  className="px-6 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-all"
                 >
                   Cancelar
                 </button>
                 <button 
-                  className="px-5 py-2.5 rounded-xl bg-[#00735C] hover:bg-[#005b49] text-white font-semibold"
                   type="submit"
+                  className="px-6 py-2.5 rounded-xl bg-[#00735C] text-white font-bold shadow-lg hover:bg-[#005c4a] transition-all"
                 >
-                  Salvar alterações
+                  Salvar Alterações
                 </button>
               </div>
             </form>
