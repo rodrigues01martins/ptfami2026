@@ -84,6 +84,7 @@ export default function App() {
       await addDoc(collection(db, 'ledger'), {
         ...data,
         category: item?.type || 'Outros',
+        approvalStatus: 'Pendente',
         createdAt: new Date().toISOString(),
         authorUid: user?.uid || 'demo-user'
       });
@@ -99,6 +100,13 @@ export default function App() {
       setEditingEntry(null);
       showToast("Atualizado.");
     } catch (e) { showToast("Erro ao atualizar."); }
+  };
+
+  const handleStatusChange = async (id: string, status: LedgerEntry['approvalStatus']) => {
+    try {
+      await updateDoc(doc(db, 'ledger', id), { approvalStatus: status });
+      showToast(`Status: ${status}`);
+    } catch (e) { showToast("Erro ao atualizar status."); }
   };
 
   const handleDeleteEntry = async (id: string) => {
@@ -133,6 +141,9 @@ export default function App() {
       }
     });
     const categories = [...new Set(BUDGET_DATA.map(i => i.type))];
+    const groups = [...new Set(BUDGET_DATA.map(i => i.group))];
+    const stages = [...new Set(BUDGET_DATA.map(i => i.stage))];
+
     return {
       category: { 
         labels: categories, 
@@ -140,13 +151,31 @@ export default function App() {
         executado: categories.map(c => ledgerEntries.filter(e => e.category === c).reduce((acc, e) => acc + e.amount, 0))
       },
       month: { labels: Array.from(monthlyMap.keys()).sort(), executado: Array.from(monthlyMap.values()) },
-      group: { labels: [], previsto: [], executado: [] },
-      stage: { labels: [], previsto: [], executado: [] }
+      group: { 
+        labels: groups,
+        previsto: groups.map(g => BUDGET_DATA.filter(i => i.group === g).reduce((acc, i) => acc + (i.value || 0), 0)),
+        executado: groups.map(g => {
+          return ledgerEntries.reduce((acc, e) => {
+            const item = BUDGET_DATA.find(i => i.id === e.itemCode);
+            return item?.group === g ? acc + e.amount : acc;
+          }, 0);
+        })
+      },
+      stage: { 
+        labels: stages,
+        previsto: stages.map(s => BUDGET_DATA.filter(i => i.stage === s).reduce((acc, i) => acc + (i.value || 0), 0)),
+        executado: stages.map(s => {
+          return ledgerEntries.reduce((acc, e) => {
+            const item = BUDGET_DATA.find(i => i.id === e.itemCode);
+            return item?.stage === s ? acc + e.amount : acc;
+          }, 0);
+        })
+      }
     };
   }, [ledgerEntries]);
 
   if (!isAuthReady) return <div className="min-h-screen flex items-center justify-center bg-slate-50 font-bold text-[#00735C]">Iniciando SEDS...</div>;
-  if (!user && !isDemoMode) return <Login onDemoMode={() => setIsDemoMode(true)} />;
+  if (!user && !isDemoMode) return <Login onDemoMode={() => setIsDemoMode(true)} showToast={showToast} />;
 
   // --- O BLOCO QUE VOCÊ ESTAVA EM DÚVIDA COMEÇA AQUI ---
   return (
@@ -187,6 +216,7 @@ export default function App() {
               entries={ledgerEntries} 
               onEdit={(entry) => setEditingEntry(entry)} 
               onDelete={handleDeleteEntry}
+              onStatusChange={handleStatusChange}
               canDelete={user?.uid === ADMIN_UID} 
             />
             <div className="w-full">
@@ -206,7 +236,7 @@ export default function App() {
           getSpentForItem={(code, id) => ledgerEntries.filter(e => e.itemCode === code && e.id !== id).reduce((acc, e) => acc + e.amount, 0)}
         />
       )}
-
+      
       <Toast message={toast.message} isVisible={toast.isVisible} />
     </div>
   );
