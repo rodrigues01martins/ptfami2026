@@ -62,7 +62,8 @@ service cloud.firestore {
     
     function isAdmin() {
       return isAuthenticated() && 
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        ((exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
          (request.auth.token.email == "rodrigues01martins@gmail.com" && request.auth.token.email_verified == true));
     }
     
@@ -94,7 +95,7 @@ service cloud.firestore {
              data.amount is number && data.amount > 0 &&
              data.date is string &&
              data.authorUid is string && data.authorUid == request.auth.uid &&
-             data.approvalStatus in ['Pendente', 'Aprovado', 'Reprovado'];
+             data.approvalStatus in ['Pendente', 'Aprovado', 'Desaprovado'];
     }
 
     function isValidAuditLog(data) {
@@ -117,9 +118,9 @@ service cloud.firestore {
     }
 
     match /ledger/{entryId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated();
+      allow read: if true;
+      allow create: if isAuthenticated() && isValidLedgerEntry(request.resource.data);
+      allow update: if isAuthenticated() && isValidLedgerEntry(request.resource.data) && (isOwner(resource.data.authorUid) || isAdmin());
       allow delete: if isAdmin();
     }
 
@@ -128,5 +129,7 @@ service cloud.firestore {
       allow create: if isAuthenticated();
       allow update, delete: if false;
     }
+  }
+}
   }
 }
