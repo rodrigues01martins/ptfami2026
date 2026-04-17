@@ -63,8 +63,8 @@ export const Login: React.FC<LoginProps> = ({ showToast }) => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-              <Lock size={12} /> Palavra-passe
+            <label className="text-[12px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <Lock size={12} /> Senha
             </label>
             <input
               type="password"
