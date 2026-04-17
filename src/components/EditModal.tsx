@@ -218,3 +218,5 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, on
     </AnimatePresence>
   );
 };
+  );
+};
