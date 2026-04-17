@@ -9,9 +9,10 @@ import { LogIn, Mail, Lock } from 'lucide-react';
 
 interface LoginProps {
   showToast: (message: string) => void;
+  onDemoMode: () => void;
 }
 
-export const Login: React.FC<LoginProps> = ({ showToast }) => {
+export const Login: React.FC<LoginProps> = ({ showToast, onDemoMode }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -44,13 +45,14 @@ export const Login: React.FC<LoginProps> = ({ showToast }) => {
           <div className="bg-[#00735C]/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-[#00735C]">
             <LogIn size={32} />
           </div>
-          <h1 className="text-2xl font-bold text-slate-800">SEDS</h1>
-          </div>
+          <h1 className="text-2xl font-bold text-slate-800">Sistema SEDS</h1>
+          <p className="text-slate-500 text-sm mt-2">Gestão de Despesas e Plano de Trabalho</p>
+        </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-[14px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-              <Mail size={12} /> E-mail
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <Mail size={12} /> E-mail Institucional
             </label>
             <input
               type="email"
@@ -58,13 +60,13 @@ export const Login: React.FC<LoginProps> = ({ showToast }) => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm focus:ring-2 focus:ring-[#00735C] transition-all"
-              placeholder="E-mail"
+              placeholder="seu.nome@seds.go.gov.br"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-[12px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-              <Lock size={12} /> Senha
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <Lock size={12} /> Palavra-passe
             </label>
             <input
               type="password"
@@ -72,7 +74,7 @@ export const Login: React.FC<LoginProps> = ({ showToast }) => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm focus:ring-2 focus:ring-[#00735C] transition-all"
-              placeholder="*******"
+              placeholder="••••••••"
             />
           </div>
 
@@ -84,6 +86,13 @@ export const Login: React.FC<LoginProps> = ({ showToast }) => {
             {loading ? 'A autenticar...' : 'Entrar no Sistema'}
           </button>
         </form>
+
+        <button 
+          onClick={onDemoMode}
+          className="w-full mt-4 text-slate-400 text-[10px] font-bold uppercase tracking-widest hover:text-[#00735C] transition-colors"
+        >
+          Entrar como Visitante (Modo Visualização)
+        </button>
         
         <p className="text-center text-[10px] text-slate-400 mt-8 uppercase tracking-widest">
           Acesso Restrito • Monitoramento Técnico SEDS
