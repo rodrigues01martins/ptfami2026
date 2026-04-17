@@ -9,14 +9,14 @@ export interface BudgetItem {
 }
 
 export interface LedgerEntry {
-  id: number;
+  id: string;
   itemCode: string;
   nf: string;
   supplier: string;
   category: string;
   documentName: string;
   documentData: string;
-  approvalStatus: 'Pendente' | 'Aprovado' | 'Reprovado';
+  approvalStatus: 'Pendente' | 'Aprovado' | 'Desaprovado';
   stage: string;
   group: string;
   description: string;
