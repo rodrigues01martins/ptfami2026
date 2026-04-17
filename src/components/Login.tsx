@@ -50,7 +50,7 @@ export const Login: React.FC<LoginProps> = ({ showToast }) => {
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">
             <label className="text-[14px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-              <Mail size={12} /> E-mail Institucional
+              <Mail size={12} /> E-mail
             </label>
             <input
               type="email"
