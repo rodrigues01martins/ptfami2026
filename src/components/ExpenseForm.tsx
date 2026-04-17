@@ -36,8 +36,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd, showToast }) =>
         <div className="bg-[#00735C]/10 p-2.5 rounded-xl text-[#00735C]"><PlusCircle size={24} /></div>
         <div>
           <h2 className="text-xl font-bold text-slate-800">Novo Lançamento</h2>
-          <p className="text-sm text-slate-500">Gestão de Despesas SEDS - Plano 02/2026</p>
-        </div>
+                  </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -45,7 +44,11 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd, showToast }) =>
           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2"><Tag size={12} /> Código do Item</label>
           <select value={formData.itemCode} onChange={(e) => setFormData({ ...formData, itemCode: e.target.value })} className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-[#00735C]">
             <option value="">Selecione um item do plano...</option>
-            {BUDGET_DATA.map((item) => <option key={item.id} value={item.id}>{item.id} - {item.description}</option>)}
+           {BUDGET_DATA.map((item) => (
+  <option key={item.id} value={item.id}>
+    {item.id} - {item.desc} {/* Mudamos de .description para .desc */}
+  </option>
+))}
           </select>
         </div>
 
@@ -66,11 +69,11 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd, showToast }) =>
 
         <div className="space-y-2">
           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2"><Calendar size={12} /> Data da Despesa</label>
-          <input type="text" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm" />
+          <input type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm" />
         </div>
 
         <div className="md:col-span-2 space-y-2">
-          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2"><AlignLeft size={12} /> Descrição Complementar</label>
+          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2"><AlignLeft size={12} /> Descrição da Despesa</label>
           <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={2} className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm" />
         </div>
       </div>
