@@ -165,5 +165,3 @@ export const Ledger: React.FC<LedgerProps> = ({ entries, onEdit, onDelete, onSta
     </div>
   );
 };
-  );
-};
