@@ -236,7 +236,7 @@ export default function App() {
       </div>
 
       {editingEntry && (
-        <EditModal 
+       <EditModal 
           isOpen={true} 
           onClose={() => setEditingEntry(null)} 
           entry={editingEntry} 
@@ -244,7 +244,7 @@ export default function App() {
           getSpentForItem={(code, id) => ledgerEntries.filter(e => e.itemCode === code && e.id !== id).reduce((acc, e) => acc + e.amount, 0)}
         />
       )}
-<Toast message={toast.message} isVisible={toast.isVisible} />
+      <Toast message={toast.message} isVisible={toast.isVisible} />
     </div>
   );
 }
