@@ -93,17 +93,22 @@ export default function App() {
     } catch (e) { showToast("Erro ao gravar."); }
   };
 
-  const handleUpdateEntry = async (updated: LedgerEntry) => {
+ const handleUpdateEntry = async (updated: LedgerEntry) => {
     try {
       const { id, ...dataToSave } = updated;
-      await updateDoc(doc(db, 'ledger', id), dataToSave);
+      const docRef = doc(db, 'ledger', id);
+      await updateDoc(docRef, dataToSave);
       setEditingEntry(null);
-      showToast("Atualizado.");
-    } catch (e: any) { 
-  // Isso vai fazer o erro aparecer no alerta da tela para você ler
-  alert("Erro real: " + e.message); 
-  showToast("Erro ao atualizar."); 
-}
+      showToast("Atualizado com sucesso!");
+    } catch (e: any) {
+      console.error("Erro no Firebase:", e);
+      // Usando window.alert para garantir compatibilidade no build
+      if (typeof window !== 'undefined') {
+        window.alert("Erro técnico: " + (e.message || "Falha na comunicação"));
+      }
+      showToast("Erro ao atualizar.");
+    }
+  };
 
   const handleStatusChange = async (id: string, status: LedgerEntry['approvalStatus']) => {
     try {
