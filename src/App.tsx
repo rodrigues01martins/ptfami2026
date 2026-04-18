@@ -247,6 +247,4 @@ export default function App() {
 <Toast message={toast.message} isVisible={toast.isVisible} />
     </div>
   );
-};
-
-export default App;
+}
