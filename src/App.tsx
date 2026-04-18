@@ -99,8 +99,11 @@ export default function App() {
       await updateDoc(doc(db, 'ledger', id), dataToSave);
       setEditingEntry(null);
       showToast("Atualizado.");
-    } catch (e) { showToast("Erro ao atualizar."); }
-  };
+    } catch (e: any) { 
+  // Isso vai fazer o erro aparecer no alerta da tela para você ler
+  alert("Erro real: " + e.message); 
+  showToast("Erro ao atualizar."); 
+}
 
   const handleStatusChange = async (id: string, status: LedgerEntry['approvalStatus']) => {
     try {
