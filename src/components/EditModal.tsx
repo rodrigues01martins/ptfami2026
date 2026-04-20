@@ -43,8 +43,8 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, on
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    let documentName = entry.documentName;
-    let documentData = entry.documentData;
+   let documentName = entry.documentName || "";
+   let documentData = entry.documentData || "";
 
     if (file) {
       if (file.type !== 'application/pdf') {
