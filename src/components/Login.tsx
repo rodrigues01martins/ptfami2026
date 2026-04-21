@@ -45,7 +45,7 @@ export const Login: React.FC<LoginProps> = ({ showToast, onDemoMode }) => {
           <div className="bg-[#00735C]/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-[#00735C]">
             <LogIn size={32} />
           </div>
-          <h1 className="text-2xl font-bold text-slate-800">Sistema SEDS</h1>
+          <h1 className="text-2xl font-bold text-slate-800">SEDS</h1>
           <p className="text-slate-500 text-sm mt-2">Gestão de Despesas e Plano de Trabalho</p>
         </div>
 
