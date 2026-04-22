@@ -23,7 +23,7 @@ import { LedgerEntry } from './types';
 import { User as UserIcon } from 'lucide-react';
 
 // SEU UID DE ADMINISTRADOR
-const ADMIN_UID = "lba3ydI19fPRDIXF09zXFI7oV8x2";
+const isAdmin = user?.uid === "lba3ydI19fPRDIXF09zXFI7oV8x2";
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -220,13 +220,14 @@ export default function App() {
               <Charts categoryData={chartData.category} monthData={chartData.month} groupData={chartData.group} stageData={chartData.stage} />
             </div>
               
-              <Ledger 
-              entries={ledgerEntries} 
-              onEdit={(entry) => setEditingEntry(entry)} 
-              onDelete={handleDeleteEntry}
-              onStatusChange={handleStatusChange}
-              canDelete={user?.uid === ADMIN_UID} 
-            />
+            <Ledger 
+  entries={ledgerEntries} 
+  onEdit={(entry) => setEditingEntry(entry)} 
+  onDelete={handleDeleteEntry}
+  onStatusChange={handleStatusChange}
+  canDelete={isAdmin} 
+  isAdmin={isAdmin}
+/>
             <div className="w-full">
                <BudgetStatus entries={ledgerEntries} />
             </div>
