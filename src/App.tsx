@@ -245,8 +245,9 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
           getSpentForItem={(code, id) => ledgerEntries.filter(e => e.itemCode === code && e.id !== id).reduce((acc, e) => acc + e.amount, 0)}
         />
       )}
-      <Toast message={toast.message} isVisible={toast.isVisible} />
+    <Toast message={toast.message} isVisible={toast.isVisible} />
     </div>
   );
 }
+
 export default App;
