@@ -68,14 +68,14 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd, showToast }) =>
         </div>
         <div>
           <h2 className="text-xl font-bold text-slate-800">Novo Lançamento</h2>
-          <p className="text-sm text-slate-500">Entrar com os dados das despesas realizadas/2026</p>
+          <p className="text-sm text-slate-500">Insira os dados das despesas realizadas</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="md:col-span-2 space-y-2">
-          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-            <Tag size={16} /> Código do Item
+          <label className="text-[14px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+            <Tag size={12} /> Código do Item
           </label>
           <select 
             value={formData.itemCode} 
@@ -90,43 +90,43 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd, showToast }) =>
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+          <label className="text-[14px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
             <FileText size={12} /> NF / Documento
           </label>
           <input type="text" placeholder="Ex: NF 456" value={formData.nf} onChange={(e) => setFormData(prev => ({ ...prev, nf: e.target.value }))} className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm" />
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+          <label className="text-[14px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
             <Building2 size={12} /> Fornecedor
           </label>
           <input type="text" placeholder="Ex: Papelaria Central" value={formData.supplier} onChange={(e) => setFormData(prev => ({ ...prev, supplier: e.target.value }))} className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm" />
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+          <label className="text-[14px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
             <DollarSign size={12} /> Valor (R$)
           </label>
           <input type="text" placeholder="0,00" value={formData.amount} onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))} className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm font-bold text-[#00735C]" />
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+          <label className="text-[14px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
             <Calendar size={12} /> Data da Despesa
           </label>
           <input type="date" value={formData.date} onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))} className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm" />
         </div>
 
         <div className="md:col-span-2 space-y-2">
-          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+          <label className="text-[14px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
             <Upload size={12} /> Documentação (PDF)
           </label>
           <input type="file" accept="application/pdf" onChange={handleFileChange} className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-[#00735C]/10 file:text-[#00735C] cursor-pointer bg-slate-50 rounded-xl" />
         </div>
 
         <div className="md:col-span-2 space-y-2">
-          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-            <AlignLeft size={12} /> Descrição Complementar
+          <label className="text-[14px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+            <AlignLeft size={12} /> Descrição (Conforme especificado na Nota Fiscal/Comprovante)
           </label>
           <textarea value={formData.description} onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))} rows={2} className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm" />
         </div>
