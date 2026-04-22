@@ -13,7 +13,7 @@ interface LedgerProps {
   isAdmin: boolean; 
 }
 
-export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, isAdmin }: LedgerProps) {
+export function App () {
   const [search, setSearch] = useState('');
   const [filterItem, setFilterItem] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
