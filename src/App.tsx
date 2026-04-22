@@ -25,7 +25,7 @@ import { User as UserIcon } from 'lucide-react';
 // SEU UID DE ADMINISTRADOR
 
 
- export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete}: LedgerProps) {
+ export function Ledger App () {
   const [user, setUser] = useState<User | null>(null);
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [isAuthReady, setIsAuthReady] = useState(false);
