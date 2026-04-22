@@ -24,8 +24,6 @@ import { User as UserIcon } from 'lucide-react';
 
 // SEU UID DE ADMINISTRADOR
 
-const isAdmin = user?.uid === "lba3ydI19fPRDIXF09zXFI7oV8x2";
-
 export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, isAdmin }: LedgerProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isDemoMode, setIsDemoMode] = useState(false);
@@ -34,6 +32,7 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
   const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>([]);
   const [toast, setToast] = useState({ message: '', isVisible: false });
   const [editingEntry, setEditingEntry] = useState<LedgerEntry | null>(null);
+  const isAdmin = user?.uid === "lba3ydI19fPRDIXF09zXFI7oV8x2";
 
   // Monitor de Autenticação
   useEffect(() => {
