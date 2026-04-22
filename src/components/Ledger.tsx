@@ -10,9 +10,10 @@ interface LedgerProps {
   onDelete: (id: string) => void;
   onStatusChange: (id: string, status: LedgerEntry['approvalStatus']) => void;
   canDelete: boolean;
+  isAdmin: boolean;
 }
 
-export const Ledger: React.FC<LedgerProps> = ({ entries, onEdit, onDelete, onStatusChange, canDelete }) => {
+export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, isAdmin }: LedgerProps) {
   const [search, setSearch] = useState('');
   const [filterItem, setFilterItem] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
@@ -128,20 +129,20 @@ export const Ledger: React.FC<LedgerProps> = ({ entries, onEdit, onDelete, onSta
                   </td>
                   <td className="p-4 text-slate-500 text-xs">{entry.date}</td>
                   <td className="p-4">
-                    <select 
-                      value={entry.approvalStatus || 'Pendente'} 
-                      onChange={(e) => onStatusChange(entry.id, e.target.value as any)}
-                      className={`text-[10px] font-bold py-1 px-2 rounded-lg outline-none border transition-all ${
-                        entry.approvalStatus === 'Aprovado' ? 'bg-green-50 text-green-700 border-green-200' :
-                        entry.approvalStatus === 'Desaprovado' ? 'bg-red-50 text-red-700 border-red-200' :
-                        'bg-yellow-50 text-yellow-700 border-yellow-200'
-                      }`}
-                    >
-                      <option value="Pendente">Pendente</option>
-                      <option value="Aprovado">Aprovado</option>
-                      <option value="Desaprovado">Desaprovado</option>
-                    </select>
-                  </td>
+  <select 
+    value={entry.approvalStatus || 'Pendente'} 
+    onChange={(e) => onStatusChange(entry.id, e.target.value as any)}
+    className={`text-[10px] font-bold py-1 px-2 rounded-lg outline-none border transition-all ${
+      entry.approvalStatus === 'Aprovado' ? 'bg-green-50 text-green-700 border-green-200' :
+      entry.approvalStatus === 'Desaprovado' ? 'bg-red-50 text-red-700 border-red-200' :
+      'bg-yellow-50 text-yellow-700 border-yellow-200'
+    }`}
+  >
+    <option value="Pendente">Pendente</option>
+    <option value="Aprovado">Aprovado</option>
+    <option value="Desaprovado">Desaprovado</option>
+  </select>
+</td>
                   <td className="p-4 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <button className="p-2 text-slate-400 hover:text-[#00735C]" onClick={() => onEdit(entry)}>
