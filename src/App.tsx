@@ -29,7 +29,7 @@ interface LedgerProps {
   onDelete: (id: string) => void;
   onStatusChange: (id: string, status: LedgerEntry['approvalStatus']) => void;
   canDelete: boolean;
-  isAdmin: boolean; // Esta é a linha que libera o uso do isAdmin lá embaixo
+  isAdmin: boolean;
 }
 const isAdmin = user?.uid === "lba3ydI19fPRDIXF09zXFI7oV8x2";
 
