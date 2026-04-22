@@ -68,14 +68,14 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd, showToast }) =>
         </div>
         <div>
           <h2 className="text-xl font-bold text-slate-800">Novo Lançamento</h2>
-          <p className="text-sm text-slate-500">Gestão de Despesas SEDS - Plano 02/2026</p>
+          <p className="text-sm text-slate-500">Entrar com os dados das despesas realizadas/2026</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="md:col-span-2 space-y-2">
           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-            <Tag size={12} /> Código do Item
+            <Tag size={16} /> Código do Item
           </label>
           <select 
             value={formData.itemCode} 
