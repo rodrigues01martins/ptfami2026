@@ -23,14 +23,7 @@ import { LedgerEntry } from './types';
 import { User as UserIcon } from 'lucide-react';
 
 // SEU UID DE ADMINISTRADOR
-interface LedgerProps {
-  entries: LedgerEntry[];
-  onEdit: (entry: LedgerEntry) => void;
-  onDelete: (id: string) => void;
-  onStatusChange: (id: string, status: LedgerEntry['approvalStatus']) => void;
-  canDelete: boolean;
-  isAdmin: boolean;
-}
+
 const isAdmin = user?.uid === "lba3ydI19fPRDIXF09zXFI7oV8x2";
 
 export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, isAdmin }: LedgerProps) {
