@@ -249,5 +249,4 @@ import { User as UserIcon } from 'lucide-react';
     </div>
   );
 }
-
 export default App;
