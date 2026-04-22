@@ -64,7 +64,7 @@ export function App() {
     link.click();
   };
 
-  const handleAddEntry = async (data: any) => {
+ const handleAddEntry = async (data: any) => {
     try {
       const item = BUDGET_DATA.find(i => i.id === data.itemCode);
       await addDoc(collection(db, 'ledger'), {
@@ -75,8 +75,7 @@ export function App() {
         authorUid: user?.uid || 'demo-user'
       });
       showToast("Registro salvo!");
-      setActiveTab('report');
-    } catch (e) { showToast("Erro ao gravar."); }
+      } catch (e) { showToast("Erro ao gravar."); }
   };
 
   const handleUpdateEntry = async (updated: LedgerEntry) => {
