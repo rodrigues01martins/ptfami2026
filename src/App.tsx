@@ -256,3 +256,4 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
     </div>
   );
 }
+export default App;
