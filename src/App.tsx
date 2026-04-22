@@ -25,7 +25,7 @@ import { User as UserIcon } from 'lucide-react';
 // SEU UID DE ADMINISTRADOR
 
 
- export function App () {
+ function App () {
   const [user, setUser] = useState<User | null>(null);
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [isAuthReady, setIsAuthReady] = useState(false);
