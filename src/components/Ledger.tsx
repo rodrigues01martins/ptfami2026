@@ -11,7 +11,6 @@ interface LedgerProps {
   onStatusChange: (id: string, status: LedgerEntry['approvalStatus']) => void;
   canDelete: boolean;
   isAdmin: boolean;
-}
 
 export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, isAdmin }: LedgerProps) {
   const [search, setSearch] = useState('');
