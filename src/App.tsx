@@ -228,14 +228,16 @@ import { User as UserIcon } from 'lucide-react';
   canDelete={isAdmin} 
   isAdmin={isAdmin}
 />
-*/}
-            <div className="w-full">
+
+           <div className="w-full">
                <BudgetStatus entries={ledgerEntries} />
             </div>
-           
-          </div>
+          </div> 
         )}
-      </div>
+                    </div> 
+    </div> 
+  ); 
+}    
 
       {editingEntry && (
        <EditModal 
