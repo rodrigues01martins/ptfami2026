@@ -18,7 +18,7 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
   const [filterItem, setFilterItem] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [sortMode, setSortMode] = useState('desc');
-
+}
   const categories = [...new Set(BUDGET_DATA.map(i => i.type))];
 
   const filtered = entries.filter(e => {
