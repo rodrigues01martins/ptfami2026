@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 // Verifique se todos esses ícones estão aqui:
-import { PlusCircle, Calendar, Tag, Building2, FileText, DollarSign, AlignLeft, Upload } from 'lucide-react';
+import {PlusCircle, Calendar, Tag, Truck, FileText,FileUp, DollarSign, AlignLeft, Upload } from 'lucide-react';
 import { BUDGET_DATA } from '../constants';
 
 interface ExpenseFormProps {
@@ -100,7 +100,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd, showToast }) =>
 
         <div className="space-y-2">
          <label className="flex items-center gap-2 text-[14px] uppercase tracking-wider font-bold text-[#00735C]">
-            <FileText size={18} className="text-[#00735C]" fill="#00735C" /> Fornecedor
+            <Truck size={18} className="text-[#00735C]" fill="#00735C" /> Fornecedor
           </label>
           <input type="text" placeholder="Ex: Papelaria Central" value={formData.supplier} onChange={(e) => setFormData(prev => ({ ...prev, supplier: e.target.value }))} className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm" />
         </div>
@@ -122,14 +122,14 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd, showToast }) =>
 
         <div className="md:col-span-2 space-y-2">
            <label className="flex items-center gap-2 text-[14px] uppercase tracking-wider font-bold text-[#00735C]">
-            <Calendar size={18} className="text-[#00735C]" fill="#00735C" /> Documentação (PDF)
+            <FileUp size={18} className="text-[#00735C]" fill="#00735C" /> Documentação (PDF)
           </label>
           <input type="file" accept="application/pdf" onChange={handleFileChange} className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-[#00735C]/10 file:text-[#00735C] cursor-pointer bg-slate-50 rounded-xl" />
         </div>
 
         <div className="md:col-span-2 space-y-2">
           <label className="flex items-center gap-2 text-[14px] uppercase tracking-wider font-bold text-[#00735C]">
-            <Calendar size={18} className="text-[#00735C]" fill="#00735C" /> <strong> Descrição (Conforme especificado na Nota Fiscal/Comprovante) </strong>
+            <AlignLeft size={18} className="text-[#00735C]" fill="#00735C" /> <strong> Descrição (Conforme especificado na Nota Fiscal/Comprovante) </strong>
           </label>
           <textarea value={formData.description} onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))} rows={2} className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm" />
         </div>
