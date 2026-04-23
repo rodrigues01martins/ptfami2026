@@ -72,26 +72,22 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd, showToast }) =>
         </div>
       </div>
 
-    <div className="space-y-1">
-  <label className="text-xs font-bold text-slate-600">Item da Planilha de Custos</label>
+ <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="md:col-span-2 space-y-2">
           <label className="text-[14px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
             <Tag size={12} /> Código do Item
           </label>
-         <input
-    list="items-list"
-    className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#00735C]"
-    placeholder="Digite para pesquisar item..."
-    value={formData.itemCode}
-    onChange={(e) => setFormData({ ...formData, itemCode: e.target.value })}
-  />
-           <datalist id="items-list">
-    {BUDGET_DATA.map((item) => (
-      <option key={item.id} value={item.id}>
-        {item.description}
-      </option>
-    ))}
-  </datalist>
-</div>
+          <select 
+            value={formData.itemCode} 
+            onChange={(e) => setFormData(prev => ({ ...prev, itemCode: e.target.value }))} 
+            className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-[#00735C]"
+          >
+            <option value="">Selecione um item do plano...</option>
+            {BUDGET_DATA.map((item) => (
+              <option key={item.id} value={item.id}>{item.id} - {item.desc}</option>
+            ))}
+          </select>
+        </div>
 
         <div className="space-y-2">
           <label className="text-[14px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
