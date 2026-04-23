@@ -43,7 +43,7 @@ export const Login: React.FC<LoginProps> = ({ showToast, onDemoMode }) => {
       <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 border border-slate-100">
         <div className="text-center mb-8">
           <div className="bg-[#00735C]/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-[#00735C]">
-          <User2 size={64} className="text-[#00735C]" fill="#00735C" />
+          <User2 size={96} className="text-[#00735C]" fill="#00735C" />
           </div>
           <h1 className="text-2xl font-bold text-slate-800">SEDS</h1>
           <p className="text-slate-500 text-sm mt-2">Monitoramento e Acompanhamento Financeiro</p>
@@ -60,7 +60,7 @@ export const Login: React.FC<LoginProps> = ({ showToast, onDemoMode }) => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm focus:ring-2 focus:ring-[#00735C] transition-all"
-              placeholder="seu.nome@seds.go.gov.br"
+              placeholder="email registrado"
             />
           </div>
 
