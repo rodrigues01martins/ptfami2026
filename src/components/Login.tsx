@@ -5,7 +5,7 @@ import {
   browserSessionPersistence 
 } from 'firebase/auth';
 import { auth } from '../firebase';
-import { LogIn, Mail, Lock } from 'lucide-react';
+import { LogIn, Mail, Lock, UserCicle } from 'lucide-react';
 
 interface LoginProps {
   showToast: (message: string) => void;
@@ -43,7 +43,7 @@ export const Login: React.FC<LoginProps> = ({ showToast, onDemoMode }) => {
       <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 border border-slate-100">
         <div className="text-center mb-8">
           <div className="bg-[#00735C]/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-[#00735C]">
-            <LogIn size={32} />
+            <UserCicle size={32} />
           </div>
           <h1 className="text-2xl font-bold text-slate-800">SEDS</h1>
           <p className="text-slate-500 text-sm mt-2">Gestão de Despesas e Plano de Trabalho</p>
