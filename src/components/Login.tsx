@@ -5,7 +5,7 @@ import {
   browserSessionPersistence 
 } from 'firebase/auth';
 import { auth } from '../firebase';
-import { LogIn, Mail, Lock, User2 } from 'lucide-react';
+import { LogIn, Mail, Lock, User2, Key } from 'lucide-react';
 
 interface LoginProps {
   showToast: (message: string) => void;
@@ -46,7 +46,7 @@ export const Login: React.FC<LoginProps> = ({ showToast, onDemoMode }) => {
           <User2 size={64} className="text-[#00735C]" fill="#00735C" />
           </div>
           <h1 className="text-2xl font-bold text-slate-800">SEDS</h1>
-          <p className="text-slate-500 text-sm mt-2">Gestão de Despesas e Plano de Trabalho</p>
+          <p className="text-slate-500 text-sm mt-2">Monitoramento e Acompanhamento Financeiro</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
@@ -66,7 +66,7 @@ export const Login: React.FC<LoginProps> = ({ showToast, onDemoMode }) => {
 
           <div className="space-y-2">
             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-              <Lock size={12} /> Palavra-passe
+              <Key size={12} /> Senha
             </label>
             <input
               type="password"
@@ -86,16 +86,9 @@ export const Login: React.FC<LoginProps> = ({ showToast, onDemoMode }) => {
             {loading ? 'A autenticar...' : 'Entrar no Sistema'}
           </button>
         </form>
-
-        <button 
-          onClick={onDemoMode}
-          className="w-full mt-4 text-slate-400 text-[10px] font-bold uppercase tracking-widest hover:text-[#00735C] transition-colors"
-        >
-          Entrar como Visitante (Modo Visualização)
-        </button>
-        
+             
         <p className="text-center text-[10px] text-slate-400 mt-8 uppercase tracking-widest">
-          Acesso Restrito • Monitoramento Técnico SEDS
+          Acesso Restrito SEDS
         </p>
       </div>
     </div>
