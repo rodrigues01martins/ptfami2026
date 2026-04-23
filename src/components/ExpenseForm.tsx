@@ -75,7 +75,6 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd, showToast }) =>
  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
        <div className="space-y-2">
   <label className="flex items-center gap-2 text-[14px] uppercase tracking-wider font-bold text-[#00735C]">
-    {/* Aumentamos o size, mudamos a cor e adicionamos o preenchimento (fill) */}
     <Tag size={18} className="text-[#00735C]" fill="#00735C" /> 
     Código do Item
   </label>
@@ -101,7 +100,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd, showToast }) =>
 
         <div className="space-y-2">
          <label className="flex items-center gap-2 text-[14px] uppercase tracking-wider font-bold text-[#00735C]">
-            <Building2 size={18} className="text-[#00735C]" fill="#00735C" /> Fornecedor
+            <Truck={18} className="text-[#00735C]" fill="#00735C" /> Fornecedor
           </label>
           <input type="text" placeholder="Ex: Papelaria Central" value={formData.supplier} onChange={(e) => setFormData(prev => ({ ...prev, supplier: e.target.value }))} className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm" />
         </div>
