@@ -73,10 +73,12 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd, showToast }) =>
       </div>
 
  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="md:col-span-2 space-y-2">
-          <label className="text-[14px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-            <Tag size={12} /> Código do Item
-          </label>
+       <div className="space-y-2">
+  <label className="flex items-center gap-2 text-[10px] uppercase tracking-wider font-bold text-[#00735C]">
+    {/* Aumentamos o size, mudamos a cor e adicionamos o preenchimento (fill) */}
+    <Tag size={18} className="text-[#00735C]" fill="#00735C" /> 
+    Código do Item
+  </label>
           <select 
             value={formData.itemCode} 
             onChange={(e) => setFormData(prev => ({ ...prev, itemCode: e.target.value }))} 
