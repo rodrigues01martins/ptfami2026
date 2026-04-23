@@ -72,8 +72,8 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd, showToast }) =>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="md:col-span-2 space-y-2">
+    <div className="space-y-1">
+  <label className="text-xs font-bold text-slate-600">Item da Planilha de Custos</label>
           <label className="text-[14px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
             <Tag size={12} /> Código do Item
           </label>
