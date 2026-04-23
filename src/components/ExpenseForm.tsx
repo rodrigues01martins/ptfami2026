@@ -64,7 +64,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd, showToast }) =>
     <form onSubmit={handleSubmit} className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 max-w-4xl mx-auto">
       <div className="flex items-center gap-3 mb-8 border-b border-slate-50 pb-6">
         <div className="bg-[#00735C]/10 p-2.5 rounded-xl text-[#00735C]">
-          <FilePlus2 size={24} />
+          <FilePlus2 size={42} />
         </div>
         <div>
           <h2 className="text-xl font-bold text-slate-800">Novo Lançamento</h2>
