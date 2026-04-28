@@ -100,8 +100,7 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
                 <td className="p-4 font-bold text-[#00735C]">{entry.itemCode}</td>
                 <td className="p-4 text-xs">{entry.nf || '—'}</td>
                 <td className="p-4 font-semibold">{entry.supplier}</td>
-                <td className="p-4">
-  <div className="text-sm text-slate-900 truncate max-w-[200px]" title={entry.description}>
+                <td className="p-4">  <div className="text-sm text-slate-900 truncate max-w-[200px]" title={entry.description}>
     {entry.description}
   </div>
 </td>
