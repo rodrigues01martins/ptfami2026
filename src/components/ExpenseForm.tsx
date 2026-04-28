@@ -37,11 +37,12 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd, showToast }) =>
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.itemCode || !formData.amount || !formData.date || !formData.supplier ) {
-      showToast("Preencha Item, Fornecedor, Valor e Data.");
+    if (!formData.itemCode || !formData.amount || !formData.date) {
+      showToast("Preencha Item, Valor e Data.");
       return;
     }
 
+    // Converte a data de YYYY-MM-DD para DD/MM/AAAA antes de salvar para manter seu padrão
     const [year, month, day] = formData.date.split('-');
     const formattedDate = `${day}/${month}/${year}`;
 
@@ -96,17 +97,11 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ onAdd, showToast }) =>
           <input type="text" placeholder="Ex: NF 456" value={formData.nf} onChange={(e) => setFormData(prev => ({ ...prev, nf: e.target.value }))} className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm" />
         </div>
 
-       <div className="space-y-2">
-          <label className="flex items-center gap-2 text-[10px] uppercase tracking-wider font-bold text-[#00735C]">
+        <div className="space-y-2">
+         <label className="flex items-center gap-2 text-[14px] uppercase tracking-wider font-bold text-[#00735C]">
             <Truck size={18} className="text-[#00735C]" fill="#00735C" /> Fornecedor
           </label>
-          <input 
-            type="text"
-            placeholder="Ex: Papelaria Central"
-            className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#00735C]"
-            value={formData.supplier} // DEVE SER supplier
-            onChange={(e) => setFormData({...formData, supplier: e.target.value})} // DEVE SER supplier
-          />
+          <input type="text" placeholder="Ex: Papelaria Central" value={formData.supplier} onChange={(e) => setFormData(prev => ({ ...prev, supplier: e.target.value }))} className="w-full bg-slate-50 border-none rounded-xl p-3.5 text-sm" />
         </div>
 
        <div className="space-y-2">
