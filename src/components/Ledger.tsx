@@ -80,69 +80,95 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
 
       <div className="overflow-x-auto max-h-[500px]">
         <table className="w-full text-left text-sm">
-          <thead>
-  <tr className="border-b border-slate-200">
-    <th className="p-4 text-left text-xs font-bold text-slate-500 uppercase">Data</th>
-    <th className="p-4 text-left text-xs font-bold text-slate-500 uppercase">Categoria</th>
-    <th className="p-4 text-left text-xs font-bold text-slate-500 uppercase">Descrição</th> {/* ADICIONADO */}
-    <th className="p-4 text-left text-xs font-bold text-slate-500 uppercase">Fornecedor</th>
-    <th className="p-4 text-right text-xs font-bold text-slate-500 uppercase">Valor</th>
-    <th className="p-4 text-center text-xs font-bold text-slate-500 uppercase">Status</th>
-    <th className="p-4 text-center text-xs font-bold text-slate-500 uppercase">Ações</th>
-  </tr>
-</thead>
-          <tbody className="divide-y divide-slate-100">
-            {filtered.map(entry => (
-             <tr key={entry.id} className="border-b border-slate-100 hover:bg-slate-50">
-  <td className="p-4 text-sm">{entry.date}</td>
-  <td className="p-4">
-    <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-800 text-[10px] font-bold">
-      {entry.category}
-    </span>
-  </td>
-               <td className="p-4 text-sm text-slate-600 italic">
-    {entry.description || '-'}
-  </td>
-                <td className="p-4 font-bold text-[#00735C]">{entry.itemCode}</td>
-                <td className="p-4 text-xs">{entry.nf || '—'}</td>
-                <td className="p-4 text-sm font-medium">{entry.supplier}</td>
-  <td className="p-4 text-right text-sm font-bold">R$ {entry.amount.toLocaleString()}</td>
-                
-                  
-                  {entry.documentData && (
-                    <button className="p-2 bg-slate-100 rounded-lg" onClick={() => openDocument(entry.documentData!)}>
-                      <Eye size={14} />
-                    </button>
-                  )}
-                </td>
-                <td className="p-4 text-right font-bold">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(entry.amount)}</td>
-                <td className="p-4">
-                  <select 
-                    disabled={!isAdmin} // TRAVA PARA USUÁRIO EXTERNO
-                    value={entry.approvalStatus || 'Pendente'} 
-                    onChange={(e) => onStatusChange(entry.id, e.target.value as any)}
-                    className={`text-[10px] font-bold py-1 px-2 rounded-lg border ${!isAdmin ? 'opacity-70 cursor-not-allowed' : ''} ${
-                      entry.approvalStatus === 'Aprovado' ? 'bg-green-50 text-green-700 border-green-200' :
-                      entry.approvalStatus === 'Desaprovado' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                    }`}
-                  >
-                    <option value="Pendente">Pendente</option>
-                    <option value="Aprovado">Aprovado</option>
-                    <option value="Desaprovado">Desaprovado</option>
-                  </select>
-                </td>
-                <td className="p-4 text-right">
-                  <div className="flex justify-end gap-2">
-                    <button className="p-2 text-slate-400 hover:text-[#00735C]" onClick={() => onEdit(entry)}><Edit size={14} /></button>
-                    {canDelete && (
-                      <button className="p-2 text-slate-400 hover:text-red-600" onClick={() => onDelete(entry.id)}><Trash2 size={14} /></button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+  <thead>
+    <tr className="border-b border-slate-200">
+      <th className="p-4 text-left text-xs font-bold text-slate-500 uppercase">Data</th>
+      <th className="p-4 text-left text-xs font-bold text-slate-500 uppercase">Categoria</th>
+      <th className="p-4 text-left text-xs font-bold text-slate-500 uppercase">Descrição</th>
+      <th className="p-4 text-left text-xs font-bold text-slate-500 uppercase">Fornecedor</th>
+      <th className="p-4 text-right text-xs font-bold text-slate-500 uppercase">Valor</th>
+      <th className="p-4 text-center text-xs font-bold text-slate-500 uppercase">Status</th>
+      <th className="p-4 text-center text-xs font-bold text-slate-500 uppercase">Ações</th>
+    </tr>
+  </thead>
+  <tbody className="divide-y divide-slate-100">
+    {filtered.map(entry => (
+      <tr key={entry.id} className="border-b border-slate-100 hover:bg-slate-50">
+        {/* 1. DATA */}
+        <td className="p-4 text-sm text-slate-600">{entry.date}</td>
+        
+        {/* 2. CATEGORIA */}
+        <td className="p-4">
+          <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-800 text-[10px] font-bold">
+            {entry.category}
+          </span>
+        </td>
+
+        {/* 3. DESCRIÇÃO */}
+        <td className="p-4 text-sm text-slate-600 italic truncate max-w-[150px]" title={entry.description}>
+          {entry.description || '-'}
+        </td>
+
+        {/* 4. FORNECEDOR */}
+        <td className="p-4 text-sm font-medium text-slate-700">{entry.supplier}</td>
+
+        {/* 5. VALOR */}
+        <td className="p-4 text-right font-bold text-slate-900">
+          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(entry.amount)}
+        </td>
+
+        {/* 6. STATUS */}
+        <td className="p-4 text-center">
+          <select 
+            disabled={!isAdmin}
+            value={entry.approvalStatus || 'Pendente'} 
+            onChange={(e) => onStatusChange(entry.id, e.target.value as any)}
+            className={`text-[10px] font-bold py-1 px-2 rounded-lg border outline-none ${
+              entry.approvalStatus === 'Aprovado' ? 'bg-green-50 text-green-700 border-green-200' :
+              entry.approvalStatus === 'Desaprovado' ? 'bg-red-50 text-red-700 border-red-200' : 
+              'bg-yellow-50 text-yellow-700 border-yellow-200'
+            } ${!isAdmin ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
+          >
+            <option value="Pendente">Pendente</option>
+            <option value="Aprovado">Aprovado</option>
+            <option value="Desaprovado">Desaprovado</option>
+          </select>
+        </td>
+
+        {/* 7. AÇÕES */}
+        <td className="p-4 text-center">
+          <div className="flex justify-center gap-2">
+            {entry.documentData && (
+              <button 
+                className="p-2 text-slate-400 hover:text-blue-600 transition-colors" 
+                onClick={() => openDocument(entry.documentData!)}
+                title="Ver Documento"
+              >
+                <Eye size={14} />
+              </button>
+            )}
+            <button 
+              className="p-2 text-slate-400 hover:text-[#00735C] transition-colors" 
+              onClick={() => onEdit(entry)}
+              title="Editar"
+            >
+              <Edit size={14} />
+            </button>
+            {canDelete && (
+              <button 
+                className="p-2 text-slate-400 hover:text-red-600 transition-colors" 
+                onClick={() => onDelete(entry.id)}
+                title="Excluir"
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
+          </div>
+        </td>
+      </tr>
+    ))}
+  </tbody>
+</table>     
       </div>
     </div>
   );
