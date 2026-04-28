@@ -133,6 +133,17 @@ const isAdmin = user ? ADMIN_UIDS.includes(user.uid) : false;
     };
   }, [ledgerEntries]);
 
+  const handleUpdateAuditComment = async (id: string, comment: string) => {
+    if (!isAdmin) return;
+    try {
+      const docRef = doc(db, 'ledger', id);
+      await updateDoc(docRef, { auditComment: comment });
+      showToast("Observação salva.");
+    } catch (e) {
+      showToast("Erro ao salvar observação.");
+    }
+  };
+
   if (!isAuthReady) return <div className="min-h-screen flex items-center justify-center bg-slate-50 font-bold text-[#00735C]">Iniciando SEDS...</div>;
   if (!user && !isDemoMode) return <Login onDemoMode={() => setIsDemoMode(true)} showToast={showToast} />;
 
@@ -168,6 +179,7 @@ const isAdmin = user ? ADMIN_UIDS.includes(user.uid) : false;
               onEdit={(entry) => setEditingEntry(entry)} 
               onDelete={handleDeleteEntry}
               onStatusChange={handleStatusChange}
+              onUpdateComment={handleUpdateAuditComment}
               canDelete={isAdmin} 
               isAdmin={isAdmin} 
             />
