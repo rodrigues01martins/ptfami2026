@@ -126,8 +126,8 @@ const isAdmin = user ? ADMIN_UIDS.includes(user.uid) : false;
     const groups = [...new Set(BUDGET_DATA.map(i => i.group))];
     const stages = [...new Set(BUDGET_DATA.map(i => i.stage))];
 
-    // Adicionei os retornos e fechamentos que faltavam no chartData
-    return { 
+   
+   return { 
       monthly: Array.from(monthlyMap.entries()).map(([name, total]) => ({ name, total })),
       categories,
       groups,
@@ -135,7 +135,6 @@ const isAdmin = user ? ADMIN_UIDS.includes(user.uid) : false;
     };
   }, [ledgerEntries]); // Fechamento correto do useMemo
 
-  // FUNÇÃO AGORA NO LUGAR CERTO (Fora do chartData)
   const handleUpdateAuditComment = async (id: string, comment: string) => {
     if (!isAdmin) return;
     try {
