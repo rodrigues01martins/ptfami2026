@@ -136,38 +136,10 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
         </td>
 
         {/* 7. AÇÕES */}
-        <td className="p-4 text-center">
-          <div className="flex justify-center gap-2">
-            {entry.documentData && (
-              <button 
-                className="p-2 text-slate-400 hover:text-blue-600 transition-colors" 
-                onClick={() => openDocument(entry.documentData!)}
-                title="Ver Documento"
-              >
-                <Eye size={14} />
-              </button>
-            )}
-            <button 
-              className="p-2 text-slate-400 hover:text-[#00735C] transition-colors" 
-              onClick={() => onEdit(entry)}
-              title="Editar"
-            >
-              <Edit size={14} />
-            </button>
-            {canDelete && (
-              <button 
-                className="p-2 text-slate-400 hover:text-red-600 transition-colors" 
-                onClick={() => onDelete(entry.id)}
-                title="Excluir"
-              >
-                <Trash2 size={14} />
-              </button>
-            )}
-          </div>
-        </td>
+       
       </tr>
-    ))}
- </tbody>
+      ))}
+    </tbody>
         </table>
       </div> 
     </div>
