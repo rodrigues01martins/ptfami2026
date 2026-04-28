@@ -9,29 +9,25 @@ interface LedgerProps {
   onEdit: (entry: LedgerEntry) => void;
   onDelete: (id: string) => void;
   onStatusChange: (id: string, status: LedgerEntry['approvalStatus']) => void;
+  onUpdateComment: (id: string, comment: string) => void; // Adicionado aqui
   canDelete: boolean;
   isAdmin: boolean; 
 }
 
-export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, isAdmin }: LedgerProps) {
+export function Ledger({ entries, onEdit, onDelete, onStatusChange, onUpdateComment, canDelete, isAdmin }: LedgerProps) {
   const [search, setSearch] = useState('');
-  const [filterStatus, setFilterStatus] = useState(''); // NOVO FILTRO
+  const [filterStatus, setFilterStatus] = useState(''); 
   const [filterItem, setFilterItem] = useState('');
 
-  const categories = [...new Set(BUDGET_DATA.map(i => i.type))];
-
+  // Lógica de filtragem limpa
   const filtered = entries.filter(e => {
     const searchBlob = [e.itemCode, e.nf, e.supplier, e.description].join(' ').toLowerCase();
     const matchSearch = !search || searchBlob.includes(search.toLowerCase());
-    const matchStatus = !filterStatus || e.approvalStatus === filterStatus; // LÓGICA DO FILTRO DE STATUS
+    const matchStatus = !filterStatus || e.approvalStatus === filterStatus;
     const matchItem = !filterItem || e.itemCode === filterItem;
-    return matchSearch && matchItem && matchCategory;
- return matchSearch && matchStatus && matchItem;
+    
+    return matchSearch && matchStatus && matchItem;
   }).sort((a, b) => formatDateForSort(b.date) - formatDateForSort(a.date));
-    if (sortMode === 'amount_desc') return b.amount - a.amount;
-    if (sortMode === 'amount_asc') return a.amount - b.amount;
-    return formatDateForSort(b.date) - formatDateForSort(a.date);
-  };
 
   const openDocument = (data: string) => {
     try {
@@ -46,13 +42,32 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
     } catch (err) { alert('Não foi possível abrir o PDF.'); }
   };
 
- return (
+  return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100">
       <div className="p-6 bg-slate-50/30 border-b">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3"> {/* Aumentei para 5 colunas */}
-          {/* ... outros filtros ... */}
-          
-          {/* NOVO SELECT DE FILTRO DE STATUS */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+          {/* Barra de Pesquisa */}
+          <div className="relative md:col-span-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+            <input 
+              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#00735C]"
+              placeholder="Procurar fornecedor, NF..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          {/* Filtro de Item */}
+          <select 
+            className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs"
+            value={filterItem}
+            onChange={(e) => setFilterItem(e.target.value)}
+          >
+            <option value="">Todos os itens</option>
+            {BUDGET_DATA.map(i => <option key={i.id} value={i.id}>{i.id}</option>)}
+          </select>
+
+          {/* NOVO FILTRO DE STATUS */}
           <select 
             className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-[#00735C]"
             value={filterStatus}
@@ -70,17 +85,24 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="text-[10px] uppercase text-slate-500 font-bold bg-slate-50">
-              {/* ... outras colunas ... */}
+              <th className="p-4">Data</th>
+              <th className="p-4">Item</th>
+              <th className="p-4">Fornecedor</th>
+              <th className="p-4 text-right">Valor</th>
               <th className="p-4">Status / Observação da Auditoria</th>
               <th className="p-4 text-right">Ações</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-slate-100">
             {filtered.map(entry => (
-              <tr key={entry.id} className="hover:bg-slate-50 border-b">
-                {/* ... outras células ... */}
+              <tr key={entry.id} className="hover:bg-slate-50 transition border-l-4 border-transparent hover:border-[#00735C]">
+                <td className="p-4 text-xs text-slate-500">{entry.date}</td>
+                <td className="p-4 font-bold text-[#00735C]">{entry.itemCode}</td>
+                <td className="p-4 font-semibold text-slate-700">{entry.supplier || '---'}</td>
+                <td className="p-4 text-right font-bold">
+                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(entry.amount)}
+                </td>
                 
-                {/* COLUNA DE STATUS COM OBSERVAÇÃO */}
                 <td className="p-4 min-w-[250px]">
                   <div className="flex flex-col gap-2">
                     <select 
@@ -88,8 +110,8 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
                       value={entry.approvalStatus || 'Pendente'}
                       onChange={(e) => onStatusChange(entry.id, e.target.value as any)}
                       className={`text-[10px] font-bold p-1 rounded border w-32 ${
-                        entry.approvalStatus === 'Aprovado' ? 'bg-green-50 text-green-700' : 
-                        entry.approvalStatus === 'Desaprovado' ? 'bg-red-50 text-red-700' : 'bg-yellow-50'
+                        entry.approvalStatus === 'Aprovado' ? 'bg-green-50 text-green-700 border-green-200' : 
+                        entry.approvalStatus === 'Desaprovado' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'
                       }`}
                     >
                       <option value="Pendente">Pendente</option>
@@ -97,24 +119,39 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
                       <option value="Desaprovado">Desaprovado</option>
                     </select>
 
-                    {/* CAMPO DE OBSERVAÇÃO (Exibe sempre, edita se for Admin) */}
                     <textarea
                       placeholder="Observações da auditoria..."
                       readOnly={!isAdmin}
                       defaultValue={entry.auditComment || ''}
                       onBlur={(e) => {
                         if(isAdmin) {
-                           // Chamaremos uma função de update aqui
                            onUpdateComment(entry.id, e.target.value);
                         }
                       }}
                       className={`text-[10px] p-2 rounded border w-full ${
-                        !isAdmin ? 'bg-slate-50 border-transparent italic' : 'bg-white border-slate-200'
+                        !isAdmin ? 'bg-slate-50 border-transparent italic text-slate-500' : 'bg-white border-slate-200'
                       }`}
                     />
                   </div>
                 </td>
-                {/* ... ações ... */}
+
+                <td className="p-4 text-right">
+                  <div className="flex items-center justify-end gap-2">
+                    {entry.documentData && (
+                      <button className="p-2 bg-slate-100 rounded-lg hover:bg-slate-200" onClick={() => openDocument(entry.documentData)}>
+                        <Eye size={14} className="text-slate-600" />
+                      </button>
+                    )}
+                    <button className="p-2 text-slate-400 hover:text-[#00735C]" onClick={() => onEdit(entry)}>
+                      <Edit size={14} />
+                    </button>
+                    {canDelete && (
+                      <button className="p-2 text-slate-400 hover:text-red-600" onClick={() => onDelete(entry.id)}>
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
