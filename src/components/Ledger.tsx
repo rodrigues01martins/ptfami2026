@@ -168,7 +168,7 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
           </tr>
         ))}    </tbody>
         </table>
-      </div> 
+     </div>
     </div>
   );
 }
