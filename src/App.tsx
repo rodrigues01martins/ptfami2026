@@ -20,6 +20,7 @@ export function App() {
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [activeTab, setActiveTab] = useState<'entry' | 'report'>('entry');
+  const [filterStatus, setFilterStatus] = useState<LedgerEntry['approvalStatus'] | 'Todos'>('Todos');
   const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>([]);
   const [toast, setToast] = useState({ message: '', isVisible: false });
   const [editingEntry, setEditingEntry] = useState<LedgerEntry | null>(null);
@@ -132,7 +133,13 @@ const isAdmin = user ? ADMIN_UIDS.includes(user.uid) : false;
       stage: { labels: stages, previsto: stages.map(s => BUDGET_DATA.filter(i => i.stage === s).reduce((acc, i) => acc + (i.value || 0), 0)), executado: stages.map(s => ledgerEntries.reduce((acc, e) => BUDGET_DATA.find(i => i.id === e.itemCode)?.stage === s ? acc + e.amount : acc, 0)) }
     };
   }, [ledgerEntries]);
-
+  
+const filteredEntries = useMemo(() => {
+  return ledgerEntries.filter(entry => 
+    filterStatus === 'Todos' || entry.approvalStatus === filterStatus
+  );
+}, [ledgerEntries, filterStatus]);
+  
   const handleUpdateAuditComment = async (id: string, comment: string) => {
     if (!isAdmin) return;
     try {
