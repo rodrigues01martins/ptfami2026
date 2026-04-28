@@ -169,8 +169,8 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
     ))}
  </tbody>
         </table>
-      </div> {/* Fecha a div da overflow-x-auto (container da tabela) */}
-    </div> {/* Fecha a div principal do Ledger ou do container de filtros */}
+      </div> 
+    </div>
   );
 }
 
