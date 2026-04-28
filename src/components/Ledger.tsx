@@ -28,13 +28,13 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
     const matchItem = !filterItem || e.itemCode === filterItem;
     const matchCategory = !filterCategory || e.category === filterCategory;
     const matchStatus = filterStatus === 'Todos' || e.approvalStatus === filterStatus;
-    return matchSearch && matchItem && matchCategory;
+    return matchSearch && matchItem && matchCategory && matchStatus;
+    
   }).sort((a, b) => {
     if (sortMode === 'asc') return formatDateForSort(a.date) - formatDateForSort(b.date);
     if (sortMode === 'amount_desc') return b.amount - a.amount;
     if (sortMode === 'amount_asc') return a.amount - b.amount;
-    return matchSearch && matchItem && matchCategory && matchStatus;
-  });
+    return formatDateForSort(b.date) - formatDateForSort(a.date); });
 
   const openDocument = (data: string) => {
     try {
