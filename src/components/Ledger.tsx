@@ -80,30 +80,34 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
 
       <div className="overflow-x-auto max-h-[500px]">
         <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 sticky top-0 z-10">
-            <tr className="text-[10px] uppercase text-slate-500 font-bold">
-              <th className="p-4">Lançamento</th>
-              <th className="p-4">Item</th>
-              <th className="p-4">NF</th>
-              <th className="p-4">Fornecedor</th>
-              <th className="p-4 text-center">Doc</th>
-              <th className="p-4 text-right">Valor</th>
-              <th className="p-4 text-left">Descrição</th>
-              <th className="p-4">Status</th>
-              <th className="p-4 text-right">Ações</th>
-            </tr>
-          </thead>
+          <thead>
+  <tr className="border-b border-slate-200">
+    <th className="p-4 text-left text-xs font-bold text-slate-500 uppercase">Data</th>
+    <th className="p-4 text-left text-xs font-bold text-slate-500 uppercase">Categoria</th>
+    <th className="p-4 text-left text-xs font-bold text-slate-500 uppercase">Descrição</th> {/* ADICIONADO */}
+    <th className="p-4 text-left text-xs font-bold text-slate-500 uppercase">Fornecedor</th>
+    <th className="p-4 text-right text-xs font-bold text-slate-500 uppercase">Valor</th>
+    <th className="p-4 text-center text-xs font-bold text-slate-500 uppercase">Status</th>
+    <th className="p-4 text-center text-xs font-bold text-slate-500 uppercase">Ações</th>
+  </tr>
+</thead>
           <tbody className="divide-y divide-slate-100">
             {filtered.map(entry => (
-              <tr key={entry.id} className="hover:bg-slate-50 transition">
-                <td className="p-4 text-[10px] text-slate-400">{entry.createdAt ? new Date(entry.createdAt).toLocaleDateString('pt-BR') : '---'}</td>
+             <tr key={entry.id} className="border-b border-slate-100 hover:bg-slate-50">
+  <td className="p-4 text-sm">{entry.date}</td>
+  <td className="p-4">
+    <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-800 text-[10px] font-bold">
+      {entry.category}
+    </span>
+  </td>
+               <td className="p-4 text-sm text-slate-600 italic">
+    {entry.description || '-'}
+  </td>
                 <td className="p-4 font-bold text-[#00735C]">{entry.itemCode}</td>
                 <td className="p-4 text-xs">{entry.nf || '—'}</td>
-                <td className="p-4 font-semibold">{entry.supplier}</td>
-                <td className="p-4">  <div className="text-sm text-slate-900 truncate max-w-[200px]" title={entry.description}>
-    {entry.description}
-  </div>
-</td>
+                <td className="p-4 text-sm font-medium">{entry.supplier}</td>
+  <td className="p-4 text-right text-sm font-bold">R$ {entry.amount.toLocaleString()}</td>
+                
                   
                   {entry.documentData && (
                     <button className="p-2 bg-slate-100 rounded-lg" onClick={() => openDocument(entry.documentData!)}>
