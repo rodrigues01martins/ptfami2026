@@ -71,7 +71,7 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
         filterStatus === status 
           ? 'bg-[#00735C] text-white border-[#00735C] shadow-sm' 
           : 'bg-white text-slate-600 border-slate-200 hover:border-[#00735C] hover:text-[#00735C]'
-      }
+      }'}
     >
       {status}
     </button>
@@ -169,8 +169,12 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
           </tr>
         ))}    </tbody>
         </table>
-     </div>
-    </div>
+    </div> 
+    </div> 
+  </div> 
+  </div> 
+  </div> 
+  </div> 
   );
 }
 
