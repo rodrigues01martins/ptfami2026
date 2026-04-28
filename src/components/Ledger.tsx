@@ -94,52 +94,79 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
   <tbody className="divide-y divide-slate-100">
     {filtered.map(entry => (
       <tr key={entry.id} className="border-b border-slate-100 hover:bg-slate-50">
-        {/* 1. DATA */}
-        <td className="p-4 text-sm text-slate-600">{entry.date}</td>
-        
-        {/* 2. CATEGORIA */}
-        <td className="p-4">
-          <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-800 text-[10px] font-bold">
-            {entry.category}
-          </span>
-        </td>
+            {/* 1. DATA */}
+            <td className="p-4 text-sm text-slate-600">{entry.date}</td>
+            
+            {/* 2. CATEGORIA */}
+            <td className="p-4">
+              <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-800 text-[10px] font-bold">
+                {entry.category}
+              </span>
+            </td>
 
-        {/* 3. DESCRIÇÃO */}
-        <td className="p-4 text-sm text-slate-600 italic truncate max-w-[150px]" title={entry.description}>
-          {entry.description || '-'}
-        </td>
+            {/* 3. DESCRIÇÃO */}
+            <td className="p-4 text-sm text-slate-600 italic truncate max-w-[150px]" title={entry.description}>
+              {entry.description || '-'}
+            </td>
 
-        {/* 4. FORNECEDOR */}
-        <td className="p-4 text-sm font-medium text-slate-700">{entry.supplier}</td>
+            {/* 4. FORNECEDOR */}
+            <td className="p-4 text-sm font-medium text-slate-700">{entry.supplier}</td>
 
-        {/* 5. VALOR */}
-        <td className="p-4 text-right font-bold text-slate-900">
-          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(entry.amount)}
-        </td>
+            {/* 5. VALOR */}
+            <td className="p-4 text-right font-bold text-slate-900">
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(entry.amount)}
+            </td>
 
-        {/* 6. STATUS */}
-        <td className="p-4 text-center">
-          <select 
-            disabled={!isAdmin}
-            value={entry.approvalStatus || 'Pendente'} 
-            onChange={(e) => onStatusChange(entry.id, e.target.value as any)}
-            className={`text-[10px] font-bold py-1 px-2 rounded-lg border outline-none ${
-              entry.approvalStatus === 'Aprovado' ? 'bg-green-50 text-green-700 border-green-200' :
-              entry.approvalStatus === 'Desaprovado' ? 'bg-red-50 text-red-700 border-red-200' : 
-              'bg-yellow-50 text-yellow-700 border-yellow-200'
-            } ${!isAdmin ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
-          >
-            <option value="Pendente">Pendente</option>
-            <option value="Aprovado">Aprovado</option>
-            <option value="Desaprovado">Desaprovado</option>
-          </select>
-        </td>
+            {/* 6. STATUS */}
+            <td className="p-4 text-center">
+              <select 
+                disabled={!isAdmin}
+                value={entry.approvalStatus || 'Pendente'} 
+                onChange={(e) => onStatusChange(entry.id, e.target.value as any)}
+                className={`text-[10px] font-bold py-1 px-2 rounded-lg border outline-none ${
+                  entry.approvalStatus === 'Aprovado' ? 'bg-green-50 text-green-700 border-green-200' :
+                  entry.approvalStatus === 'Desaprovado' ? 'bg-red-50 text-red-700 border-red-200' : 
+                  'bg-yellow-50 text-yellow-700 border-yellow-200'
+                } ${!isAdmin ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
+              >
+                <option value="Pendente">Pendente</option>
+                <option value="Aprovado">Aprovado</option>
+                <option value="Desaprovado">Desaprovado</option>
+              </select>
+            </td>
 
-        {/* 7. AÇÕES */}
-       
-      </tr>
-      ))}
-    </tbody>
+            {/* 7. AÇÕES */}
+            <td className="p-4 text-center">
+              <div className="flex justify-center gap-2">
+                {entry.documentData && (
+                  <button 
+                    className="p-2 text-slate-400 hover:text-blue-600 transition-colors" 
+                    onClick={() => openDocument(entry.documentData!)}
+                    title="Ver Documento"
+                  >
+                    <Eye size={14} />
+                  </button>
+                )}
+                <button 
+                  className="p-2 text-slate-400 hover:text-[#00735C] transition-colors" 
+                  onClick={() => onEdit(entry)}
+                  title="Editar"
+                >
+                  <Edit size={14} />
+                </button>
+                {canDelete && (
+                  <button 
+                    className="p-2 text-slate-400 hover:text-red-600 transition-colors" 
+                    onClick={() => onDelete(entry.id)}
+                    title="Excluir"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
+              </div>
+            </td>
+          </tr>
+        ))}    </tbody>
         </table>
       </div> 
     </div>
