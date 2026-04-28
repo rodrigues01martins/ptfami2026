@@ -15,20 +15,19 @@ interface LedgerProps {
 
 export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, isAdmin }: LedgerProps) {
   const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState(''); // NOVO FILTRO
   const [filterItem, setFilterItem] = useState('');
-  const [filterCategory, setFilterCategory] = useState('');
-  const [sortMode, setSortMode] = useState('desc');
 
   const categories = [...new Set(BUDGET_DATA.map(i => i.type))];
 
   const filtered = entries.filter(e => {
-    const searchBlob = [e.itemCode, e.nf, e.supplier, e.description, e.date, e.category].join(' ').toLowerCase();
+    const searchBlob = [e.itemCode, e.nf, e.supplier, e.description].join(' ').toLowerCase();
     const matchSearch = !search || searchBlob.includes(search.toLowerCase());
+    const matchStatus = !filterStatus || e.approvalStatus === filterStatus; // LÓGICA DO FILTRO DE STATUS
     const matchItem = !filterItem || e.itemCode === filterItem;
-    const matchCategory = !filterCategory || e.category === filterCategory;
     return matchSearch && matchItem && matchCategory;
-  }).sort((a, b) => {
-    if (sortMode === 'asc') return formatDateForSort(a.date) - formatDateForSort(b.date);
+ return matchSearch && matchStatus && matchItem;
+  }).sort((a, b) => formatDateForSort(b.date) - formatDateForSort(a.date));
     if (sortMode === 'amount_desc') return b.amount - a.amount;
     if (sortMode === 'amount_asc') return a.amount - b.amount;
     return formatDateForSort(b.date) - formatDateForSort(a.date);
@@ -47,82 +46,75 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
     } catch (err) { alert('Não foi possível abrir o PDF.'); }
   };
 
-  return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-      <div className="p-6 border-b border-slate-100 flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-slate-50/30">
-        <h3 className="text-lg font-bold text-slate-900">Registro das Despesas</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 w-full xl:w-auto xl:min-w-[800px]">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-            <input className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#00735C]" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Procurar..." type="text" />
-          </div>
-          <select className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs" value={filterItem} onChange={(e) => setFilterItem(e.target.value)}>
-            <option value="">Todos os itens</option>
-            {BUDGET_DATA.map(i => <option key={i.id} value={i.id}>{i.id}</option>)}
-          </select>
-          <select className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs" value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
-            <option value="">Categorias</option>
-            {categories.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <select className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs" value={sortMode} onChange={(e) => setSortMode(e.target.value)}>
-            <option value="desc">Recentes</option>
-            <option value="asc">Antigos</option>
+ return (
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-100">
+      <div className="p-6 bg-slate-50/30 border-b">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3"> {/* Aumentei para 5 colunas */}
+          {/* ... outros filtros ... */}
+          
+          {/* NOVO SELECT DE FILTRO DE STATUS */}
+          <select 
+            className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-[#00735C]"
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+          >
+            <option value="">Todos os Status</option>
+            <option value="Pendente">🟡 Pendentes</option>
+            <option value="Aprovado">🟢 Aprovados</option>
+            <option value="Desaprovado">🔴 Desaprovados</option>
           </select>
         </div>
       </div>
 
-      <div className="overflow-x-auto max-h-[500px]">
+      <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 sticky top-0 z-10">
-            <tr className="text-[10px] uppercase text-slate-500 font-bold">
-              <th className="p-4">Lançamento</th>
-              <th className="p-4">Item</th>
-              <th className="p-4">NF</th>
-              <th className="p-4">Fornecedor</th>
-              <th className="p-4 text-center">Doc</th>
-              <th className="p-4 text-right">Valor</th>
-              <th className="p-4">Status</th>
+          <thead>
+            <tr className="text-[10px] uppercase text-slate-500 font-bold bg-slate-50">
+              {/* ... outras colunas ... */}
+              <th className="p-4">Status / Observação da Auditoria</th>
               <th className="p-4 text-right">Ações</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody>
             {filtered.map(entry => (
-              <tr key={entry.id} className="hover:bg-slate-50 transition">
-                <td className="p-4 text-[10px] text-slate-400">{entry.createdAt ? new Date(entry.createdAt).toLocaleDateString('pt-BR') : '---'}</td>
-                <td className="p-4 font-bold text-[#00735C]">{entry.itemCode}</td>
-                <td className="p-4 text-xs">{entry.nf || '—'}</td>
-                <td className="p-4 font-semibold">{entry.supplier}</td>
-                <td className="p-4 text-center">
-                  {entry.documentData && (
-                    <button className="p-2 bg-slate-100 rounded-lg" onClick={() => openDocument(entry.documentData!)}>
-                      <Eye size={14} />
-                    </button>
-                  )}
-                </td>
-                <td className="p-4 text-right font-bold">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(entry.amount)}</td>
-                <td className="p-4">
-                  <select 
-                    disabled={!isAdmin} // TRAVA PARA USUÁRIO EXTERNO
-                    value={entry.approvalStatus || 'Pendente'} 
-                    onChange={(e) => onStatusChange(entry.id, e.target.value as any)}
-                    className={`text-[10px] font-bold py-1 px-2 rounded-lg border ${!isAdmin ? 'opacity-70 cursor-not-allowed' : ''} ${
-                      entry.approvalStatus === 'Aprovado' ? 'bg-green-50 text-green-700 border-green-200' :
-                      entry.approvalStatus === 'Desaprovado' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                    }`}
-                  >
-                    <option value="Pendente">Pendente</option>
-                    <option value="Aprovado">Aprovado</option>
-                    <option value="Desaprovado">Desaprovado</option>
-                  </select>
-                </td>
-                <td className="p-4 text-right">
-                  <div className="flex justify-end gap-2">
-                    <button className="p-2 text-slate-400 hover:text-[#00735C]" onClick={() => onEdit(entry)}><Edit size={14} /></button>
-                    {canDelete && (
-                      <button className="p-2 text-slate-400 hover:text-red-600" onClick={() => onDelete(entry.id)}><Trash2 size={14} /></button>
-                    )}
+              <tr key={entry.id} className="hover:bg-slate-50 border-b">
+                {/* ... outras células ... */}
+                
+                {/* COLUNA DE STATUS COM OBSERVAÇÃO */}
+                <td className="p-4 min-w-[250px]">
+                  <div className="flex flex-col gap-2">
+                    <select 
+                      disabled={!isAdmin}
+                      value={entry.approvalStatus || 'Pendente'}
+                      onChange={(e) => onStatusChange(entry.id, e.target.value as any)}
+                      className={`text-[10px] font-bold p-1 rounded border w-32 ${
+                        entry.approvalStatus === 'Aprovado' ? 'bg-green-50 text-green-700' : 
+                        entry.approvalStatus === 'Desaprovado' ? 'bg-red-50 text-red-700' : 'bg-yellow-50'
+                      }`}
+                    >
+                      <option value="Pendente">Pendente</option>
+                      <option value="Aprovado">Aprovado</option>
+                      <option value="Desaprovado">Desaprovado</option>
+                    </select>
+
+                    {/* CAMPO DE OBSERVAÇÃO (Exibe sempre, edita se for Admin) */}
+                    <textarea
+                      placeholder="Observações da auditoria..."
+                      readOnly={!isAdmin}
+                      defaultValue={entry.auditComment || ''}
+                      onBlur={(e) => {
+                        if(isAdmin) {
+                           // Chamaremos uma função de update aqui
+                           onUpdateComment(entry.id, e.target.value);
+                        }
+                      }}
+                      className={`text-[10px] p-2 rounded border w-full ${
+                        !isAdmin ? 'bg-slate-50 border-transparent italic' : 'bg-white border-slate-200'
+                      }`}
+                    />
                   </div>
                 </td>
+                {/* ... ações ... */}
               </tr>
             ))}
           </tbody>
