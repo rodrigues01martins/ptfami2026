@@ -121,21 +121,31 @@ const isAdmin = user ? ADMIN_UIDS.includes(user.uid) : false;
         monthlyMap.set(label, (monthlyMap.get(label) || 0) + e.amount);
       }
     });
+
     const categories = [...new Set(BUDGET_DATA.map(i => i.type))];
     const groups = [...new Set(BUDGET_DATA.map(i => i.group))];
     const stages = [...new Set(BUDGET_DATA.map(i => i.stage))];
 
-    const handleUpdateAuditComment = async (id: string, comment: string) => {
-  if (!isAdmin) return;
-  try {
-    const docRef = doc(db, 'ledger', id);
-    await updateDoc(docRef, { auditComment: comment });
-    showToast("Observação salva.");
-  } catch (e) {
-    showToast("Erro ao salvar observação.");
-  }
-};
+    // Adicionei os retornos e fechamentos que faltavam no chartData
+    return { 
+      monthly: Array.from(monthlyMap.entries()).map(([name, total]) => ({ name, total })),
+      categories,
+      groups,
+      stages
+    };
+  }, [ledgerEntries]); // Fechamento correto do useMemo
 
+  // FUNÇÃO AGORA NO LUGAR CERTO (Fora do chartData)
+  const handleUpdateAuditComment = async (id: string, comment: string) => {
+    if (!isAdmin) return;
+    try {
+      const docRef = doc(db, 'ledger', id);
+      await updateDoc(docRef, { auditComment: comment });
+      showToast("Observação salva.");
+    } catch (e) {
+      showToast("Erro ao salvar observação.");
+    }
+  };
     
     return {
       category: { labels: categories, previsto: categories.map(c => BUDGET_DATA.filter(i => i.type === c).reduce((acc, i) => acc + (i.value || 0), 0)), executado: categories.map(c => ledgerEntries.filter(e => e.category === c).reduce((acc, e) => acc + e.amount, 0)) },
