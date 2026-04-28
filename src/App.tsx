@@ -106,56 +106,78 @@ const isAdmin = user ? ADMIN_UIDS.includes(user.uid) : false;
     }
   };
 
-  const totals = useMemo(() => {
-    const totalOrcado = BUDGET_DATA.reduce((acc, i) => acc + (i.value || 0), 0);
-    const totalExecutado = ledgerEntries.reduce((acc, i) => acc + i.amount, 0);
-    return { totalOrcado, totalExecutado, totalSaldo: totalOrcado - totalExecutado, percentTotal: (totalExecutado / totalOrcado) * 100 || 0 };
-  }, [ledgerEntries]);
+ const totals = useMemo(() => {
+  const totalOrcado = BUDGET_DATA.reduce((acc, i) => acc + (i.value || 0), 0);
+  const totalExecutado = ledgerEntries.reduce((acc, i) => acc + i.amount, 0);
+  return { 
+    totalOrcado, 
+    totalExecutado, 
+    totalSaldo: totalOrcado - totalExecutado, 
+    percentTotal: (totalExecutado / totalOrcado) * 100 || 0 
+  };
+}, [ledgerEntries]);
 
-  const chartData = useMemo(() => {
-    const monthlyMap = new Map<string, number>();
-    ledgerEntries.forEach(e => {
-      const parts = e.date.split('/');
-      if (parts.length === 3) {
-        const label = `${parts[1]}/${parts[2]}`;
-        monthlyMap.set(label, (monthlyMap.get(label) || 0) + e.amount);
-      }
-    });
+const chartData = useMemo(() => {
+  const monthlyMap = new Map<string, number>();
+  ledgerEntries.forEach(e => {
+    const parts = e.date.split('/');
+    if (parts.length === 3) {
+      const label = `${parts[1]}/${parts[2]}`;
+      monthlyMap.set(label, (monthlyMap.get(label) || 0) + e.amount);
+    }
+  });
 
-    const categories = [...new Set(BUDGET_DATA.map(i => i.type))];
-    const groups = [...new Set(BUDGET_DATA.map(i => i.group))];
-    const stages = [...new Set(BUDGET_DATA.map(i => i.stage))];
+  const categories = [...new Set(BUDGET_DATA.map(i => i.type))];
+  const groups = [...new Set(BUDGET_DATA.map(i => i.group))];
+  const stages = [...new Set(BUDGET_DATA.map(i => i.stage))];
 
-   
-   return { 
-      monthly: Array.from(monthlyMap.entries()).map(([name, total]) => ({ name, total })),
-      categories,
-      groups,
-      stages
-    };
-  }, [ledgerEntries]); // Fechamento correto do useMemo
-
-  const handleUpdateAuditComment = async (id: string, comment: string) => {
-    if (!isAdmin) return;
-    try {
-      const docRef = doc(db, 'ledger', id);
-      await updateDoc(docRef, { auditComment: comment });
-      showToast("Observação salva.");
-    } catch (e) {
-      showToast("Erro ao salvar observação.");
+  return { 
+    category: { 
+      labels: categories, 
+      previsto: categories.map(c => BUDGET_DATA.filter(i => i.type === c).reduce((acc, i) => acc + (i.value || 0), 0)), 
+      executado: categories.map(c => ledgerEntries.filter(e => e.category === c).reduce((acc, e) => acc + e.amount, 0)) 
+    },
+    month: { 
+      labels: Array.from(monthlyMap.keys()).sort(), 
+      executado: Array.from(monthlyMap.values()) 
+    },
+    group: { 
+      labels: groups, 
+      previsto: groups.map(g => BUDGET_DATA.filter(i => i.group === g).reduce((acc, i) => acc + (i.value || 0), 0)), 
+      executado: groups.map(g => ledgerEntries.reduce((acc, e) => BUDGET_DATA.find(i => i.id === e.itemCode)?.group === g ? acc + e.amount : acc, 0)) 
+    },
+    stage: { 
+      labels: stages, 
+      previsto: stages.map(s => BUDGET_DATA.filter(i => i.stage === s).reduce((acc, i) => acc + (i.value || 0), 0)), 
+      executado: stages.map(s => ledgerEntries.reduce((acc, e) => BUDGET_DATA.find(i => i.id === e.itemCode)?.stage === s ? acc + e.amount : acc, 0)) 
     }
   };
-    
-    return {
-      category: { labels: categories, previsto: categories.map(c => BUDGET_DATA.filter(i => i.type === c).reduce((acc, i) => acc + (i.value || 0), 0)), executado: categories.map(c => ledgerEntries.filter(e => e.category === c).reduce((acc, e) => acc + e.amount, 0)) },
-      month: { labels: Array.from(monthlyMap.keys()).sort(), executado: Array.from(monthlyMap.values()) },
-      group: { labels: groups, previsto: groups.map(g => BUDGET_DATA.filter(i => i.group === g).reduce((acc, i) => acc + (i.value || 0), 0)), executado: groups.map(g => ledgerEntries.reduce((acc, e) => BUDGET_DATA.find(i => i.id === e.itemCode)?.group === g ? acc + e.amount : acc, 0)) },
-      stage: { labels: stages, previsto: stages.map(s => BUDGET_DATA.filter(i => i.stage === s).reduce((acc, i) => acc + (i.value || 0), 0)), executado: stages.map(s => ledgerEntries.reduce((acc, e) => BUDGET_DATA.find(i => i.id === e.itemCode)?.stage === s ? acc + e.amount : acc, 0)) }
-    };
-  }, [ledgerEntries]);
+}, [ledgerEntries]);
 
-  if (!isAuthReady) return <div className="min-h-screen flex items-center justify-center bg-slate-50 font-bold text-[#00735C]">Iniciando SEDS...</div>;
-  if (!user && !isDemoMode) return <Login onDemoMode={() => setIsDemoMode(true)} showToast={showToast} />;
+// ✅ FORA do useMemo
+const handleUpdateAuditComment = async (id: string, comment: string) => {
+  if (!isAdmin) return;
+  try {
+    const docRef = doc(db, 'ledger', id);
+    await updateDoc(docRef, { auditComment: comment });
+    showToast("Observação salva.");
+  } catch (e) {
+    showToast("Erro ao salvar observação.");
+  }
+};
+Resumo das mudanças:
+
+✅ Fechei
+
+
+
+
+Claude 4.5 Haiku
+
+
+
+ 
+   
 
   return (
     <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8">
