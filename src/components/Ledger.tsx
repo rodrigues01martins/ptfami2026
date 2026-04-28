@@ -18,6 +18,7 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
   const [filterItem, setFilterItem] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [sortMode, setSortMode] = useState('desc');
+  const [filterStatus, setFilterStatus] = useState<string>('Todos');
 
   const categories = [...new Set(BUDGET_DATA.map(i => i.type))];
 
@@ -26,12 +27,13 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
     const matchSearch = !search || searchBlob.includes(search.toLowerCase());
     const matchItem = !filterItem || e.itemCode === filterItem;
     const matchCategory = !filterCategory || e.category === filterCategory;
+    const matchStatus = filterStatus === 'Todos' || e.approvalStatus === filterStatus;
     return matchSearch && matchItem && matchCategory;
   }).sort((a, b) => {
     if (sortMode === 'asc') return formatDateForSort(a.date) - formatDateForSort(b.date);
     if (sortMode === 'amount_desc') return b.amount - a.amount;
     if (sortMode === 'amount_asc') return a.amount - b.amount;
-    return formatDateForSort(b.date) - formatDateForSort(a.date);
+    return matchSearch && matchItem && matchCategory && matchStatus;
   });
 
   const openDocument = (data: string) => {
@@ -69,6 +71,22 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
             <option value="asc">Antigos</option>
           </select>
         </div>
+        <div className="flex flex-wrap gap-2 mb-4 items-center">
+  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mr-2">Status:</span>
+  {['Todos', 'Pendente', 'Aprovado', 'Reprovado'].map((status) => (
+    <button
+      key={status}
+      onClick={() => setFilterStatus(status)}
+      className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border ${
+        filterStatus === status 
+          ? 'bg-[#00735C] text-white border-[#00735C] shadow-sm' 
+          : 'bg-white text-slate-600 border-slate-200 hover:border-[#00735C] hover:text-[#00735C]'
+      }`}
+    >
+      {status}
+    </button>
+  ))}
+</div>
       </div>
 
       <div className="overflow-x-auto max-h-[500px]">
