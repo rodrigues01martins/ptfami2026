@@ -88,6 +88,7 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
               <th className="p-4">Fornecedor</th>
               <th className="p-4 text-center">Doc</th>
               <th className="p-4 text-right">Valor</th>
+              <th className="p-4 text-left">Descrição</th>
               <th className="p-4">Status</th>
               <th className="p-4 text-right">Ações</th>
             </tr>
@@ -99,7 +100,12 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
                 <td className="p-4 font-bold text-[#00735C]">{entry.itemCode}</td>
                 <td className="p-4 text-xs">{entry.nf || '—'}</td>
                 <td className="p-4 font-semibold">{entry.supplier}</td>
-                <td className="p-4 text-center">
+                <td className="p-4">
+  <div className="text-sm text-slate-900 truncate max-w-[200px]" title={entry.description}>
+    {entry.description}
+  </div>
+</td>
+                  
                   {entry.documentData && (
                     <button className="p-2 bg-slate-100 rounded-lg" onClick={() => openDocument(entry.documentData!)}>
                       <Eye size={14} />
