@@ -31,7 +31,7 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
     if (sortMode === 'amount_desc') return b.amount - a.amount;
     if (sortMode === 'amount_asc') return a.amount - b.amount;
     return formatDateForSort(b.date) - formatDateForSort(a.date);
-  });
+  };
 
   const openDocument = (data: string) => {
     try {
