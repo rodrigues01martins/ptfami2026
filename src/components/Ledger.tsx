@@ -62,7 +62,8 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
         </div>
         <div className="flex flex-wrap gap-2 mb-4 items-center">
   <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mr-2">Status:</span>
-  {['Todos', 'Pendente', 'Aprovado', 'Reprovado'].map((status) => (
+  {['Todos', 'Pendente', 'Aprovado', 'Reprovado']
+    .map((status) => (
     <button
       key={status}
       onClick={() => setFilterStatus(status)}
@@ -70,7 +71,7 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
         filterStatus === status 
           ? 'bg-[#00735C] text-white border-[#00735C] shadow-sm' 
           : 'bg-white text-slate-600 border-slate-200 hover:border-[#00735C] hover:text-[#00735C]'
-      }`}
+      }
     >
       {status}
     </button>
