@@ -154,7 +154,6 @@ const chartData = useMemo(() => {
   };
 }, [ledgerEntries]);
 
-// ✅ FORA do useMemo
 const handleUpdateAuditComment = async (id: string, comment: string) => {
   if (!isAdmin) return;
   try {
@@ -165,19 +164,6 @@ const handleUpdateAuditComment = async (id: string, comment: string) => {
     showToast("Erro ao salvar observação.");
   }
 };
-Resumo das mudanças:
-
-✅ Fechei
-
-
-
-
-Claude 4.5 Haiku
-
-
-
- 
-   
 
   return (
     <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8">
