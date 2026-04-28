@@ -14,8 +14,6 @@ interface LedgerProps {
 }
 
 export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, isAdmin }: LedgerProps) {
-  const [search, setSearch] = useState('');
-  const [filterItem, setFilterItem] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [sortMode, setSortMode] = useState('desc');
   const [filterStatus, setFilterStatus] = useState<string>('Todos');
@@ -23,12 +21,9 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
   const categories = [...new Set(BUDGET_DATA.map(i => i.type))];
 
   const filtered = entries.filter(e => {
-    const searchBlob = [e.itemCode, e.nf, e.supplier, e.description, e.date, e.category].join(' ').toLowerCase();
-    const matchSearch = !search || searchBlob.includes(search.toLowerCase());
-    const matchItem = !filterItem || e.itemCode === filterItem;
     const matchCategory = !filterCategory || e.category === filterCategory;
     const matchStatus = filterStatus === 'Todos' || e.approvalStatus === filterStatus;
-    return matchSearch && matchItem && matchCategory && matchStatus;
+    return matchCategory && matchStatus;
     
   }).sort((a, b) => {
     if (sortMode === 'asc') return formatDateForSort(a.date) - formatDateForSort(b.date);
@@ -56,13 +51,7 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 w-full xl:w-auto xl:min-w-[800px]">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-            <input className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#00735C]" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Procurar..." type="text" />
-          </div>
-          <select className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs" value={filterItem} onChange={(e) => setFilterItem(e.target.value)}>
-            <option value="">Todos os itens</option>
-            {BUDGET_DATA.map(i => <option key={i.id} value={i.id}>{i.id}</option>)}
-          </select>
-          <select className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs" value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
+           <select className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs" value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
             <option value="">Categorias</option>
             {categories.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
