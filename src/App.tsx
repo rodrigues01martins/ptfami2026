@@ -125,6 +125,18 @@ const isAdmin = user ? ADMIN_UIDS.includes(user.uid) : false;
     const groups = [...new Set(BUDGET_DATA.map(i => i.group))];
     const stages = [...new Set(BUDGET_DATA.map(i => i.stage))];
 
+    const handleUpdateAuditComment = async (id: string, comment: string) => {
+  if (!isAdmin) return;
+  try {
+    const docRef = doc(db, 'ledger', id);
+    await updateDoc(docRef, { auditComment: comment });
+    showToast("Observação salva.");
+  } catch (e) {
+    showToast("Erro ao salvar observação.");
+  }
+};
+
+    
     return {
       category: { labels: categories, previsto: categories.map(c => BUDGET_DATA.filter(i => i.type === c).reduce((acc, i) => acc + (i.value || 0), 0)), executado: categories.map(c => ledgerEntries.filter(e => e.category === c).reduce((acc, e) => acc + e.amount, 0)) },
       month: { labels: Array.from(monthlyMap.keys()).sort(), executado: Array.from(monthlyMap.values()) },
@@ -169,7 +181,8 @@ const isAdmin = user ? ADMIN_UIDS.includes(user.uid) : false;
               onDelete={handleDeleteEntry}
               onStatusChange={handleStatusChange}
               canDelete={isAdmin} 
-              isAdmin={isAdmin} 
+              isAdmin={isAdmin}
+              onUpdateComment={handleUpdateAuditComment}
             />
             <div className="w-full">
               <BudgetStatus entries={ledgerEntries} />
