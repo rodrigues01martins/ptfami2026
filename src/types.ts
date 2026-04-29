@@ -26,6 +26,7 @@ export interface LedgerEntry {
   createdAt: string;
   updatedAt: string;
   authorUid: string;
+  auditComment?: string;
 }
 
 export interface AuditLogEntry {
