@@ -20,6 +20,7 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, on
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState('');
+  const [auditComment, setAuditComment] = useState('');
   const [file, setFile] = useState<File | null>(null);
 
   useEffect(() => {
@@ -30,6 +31,7 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, on
       setDescription(entry.description);
       setAmount(entry.amount.toString());
       setDate(formatDateForInput(entry.date));
+      setAuditComment(entry.auditComment || '');
       setFile(null);
     }
   }, [entry]);
@@ -65,6 +67,7 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, on
       date: date.split('-').reverse().join('/'),
       documentName,
       documentData,
+      auditComment,
       updatedAt: new Date().toISOString()
     });
   };
@@ -196,6 +199,18 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, on
                 />
               </div>
 
+<div>
+  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+    Observações de Auditoria
+  </label>
+  <textarea 
+    className="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#00735C] outline-none border text-sm bg-slate-50 min-h-[80px]"
+    value={auditComment}
+    onChange={(e) => setAuditComment(e.target.value)}
+    placeholder="Instruções para o usuário..."
+  />
+</div>
+              
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-50">
                 <button 
                   type="button"
