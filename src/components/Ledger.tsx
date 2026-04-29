@@ -24,12 +24,12 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
     const matchCategory = !filterCategory || e.category === filterCategory;
     const matchStatus = filterStatus === 'Todos' || e.approvalStatus === filterStatus;
     return matchCategory && matchStatus;
-    
   }).sort((a, b) => {
     if (sortMode === 'asc') return formatDateForSort(a.date) - formatDateForSort(b.date);
     if (sortMode === 'amount_desc') return b.amount - a.amount;
     if (sortMode === 'amount_asc') return a.amount - b.amount;
-    return formatDateForSort(b.date) - formatDateForSort(a.date); });
+    return formatDateForSort(b.date) - formatDateForSort(a.date);
+  });
 
   const openDocument = (data: string) => {
     try {
@@ -48,133 +48,115 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
       <div className="p-6 border-b border-slate-100 flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-slate-50/30">
         <h3 className="text-lg font-bold text-slate-900">Registro das Despesas</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 w-full xl:w-auto xl:min-w-[800px]">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-           <select className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs" value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
-            <option value="">Categorias</option>
-            {categories.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <select className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs" value={sortMode} onChange={(e) => setSortMode(e.target.value)}>
-            <option value="desc">Recentes</option>
-            <option value="asc">Antigos</option>
-          </select>
+        
+        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+          <div className="flex gap-2">
+            <select 
+              className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#00735C]" 
+              value={filterCategory} 
+              onChange={(e) => setFilterCategory(e.target.value)}
+            >
+              <option value="">Categorias</option>
+              {categories.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+
+            <select 
+              className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#00735C]" 
+              value={sortMode} 
+              onChange={(e) => setSortMode(e.target.value)}
+            >
+              <option value="desc">Recentes</option>
+              <option value="asc">Antigos</option>
+            </select>
+          </div>
+
+          <div className="flex flex-wrap gap-2 items-center border-l pl-4 border-slate-200">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Status:</span>
+            {['Todos', 'Pendente', 'Aprovado', 'Reprovado'].map((status) => (
+              <button
+                key={status}
+                onClick={() => setFilterStatus(status)}
+                className={`px-3 py-1 rounded-full text-[10px] font-bold transition-all border ${
+                  filterStatus === status 
+                    ? 'bg-[#00735C] text-white border-[#00735C]' 
+                    : 'bg-white text-slate-600 border-slate-200 hover:border-[#00735C]'
+                }`}
+              >
+                {status}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2 mb-4 items-center">
-  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mr-2">Status:</span>
-  {['Todos', 'Pendente', 'Aprovado', 'Reprovado']
-    .map((status) => (
-    <button
-      key={status}
-      onClick={() => setFilterStatus(status)}
-      className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border ${
-        filterStatus === status 
-          ? 'bg-[#00735C] text-white border-[#00735C] shadow-sm' 
-          : 'bg-white text-slate-600 border-slate-200 hover:border-[#00735C] hover:text-[#00735C]'
-      }'}
-    >
-      {status}
-    </button>
-  ))}
-</div>
       </div>
 
       <div className="overflow-x-auto max-h-[500px]">
-        <table className="w-full text-left text-sm">
-  <thead>
-    <tr className="border-b border-slate-200">
-      <th className="p-4 text-left text-xs font-bold text-slate-500 uppercase">Data</th>
-      <th className="p-4 text-left text-xs font-bold text-slate-500 uppercase">Categoria</th>
-      <th className="p-4 text-left text-xs font-bold text-slate-500 uppercase">Descrição</th>
-      <th className="p-4 text-left text-xs font-bold text-slate-500 uppercase">Fornecedor</th>
-      <th className="p-4 text-right text-xs font-bold text-slate-500 uppercase">Valor</th>
-      <th className="p-4 text-center text-xs font-bold text-slate-500 uppercase">Status</th>
-      <th className="p-4 text-center text-xs font-bold text-slate-500 uppercase">Ações</th>
-    </tr>
-  </thead>
-  <tbody className="divide-y divide-slate-100">
-    {filtered.map(entry => (
-      <tr key={entry.id} className="border-b border-slate-100 hover:bg-slate-50">
-            {/* 1. DATA */}
-            <td className="p-4 text-sm text-slate-600">{entry.date}</td>
-            
-            {/* 2. CATEGORIA */}
-            <td className="p-4">
-              <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-800 text-[10px] font-bold">
-                {entry.category}
-              </span>
-            </td>
-
-            {/* 3. DESCRIÇÃO */}
-            <td className="p-4 text-sm text-slate-600 italic truncate max-w-[150px]" title={entry.description}>
-              {entry.description || '-'}
-            </td>
-
-            {/* 4. FORNECEDOR */}
-            <td className="p-4 text-sm font-medium text-slate-700">{entry.supplier}</td>
-
-            {/* 5. VALOR */}
-            <td className="p-4 text-right font-bold text-slate-900">
-              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(entry.amount)}
-            </td>
-
-            {/* 6. STATUS */}
-            <td className="p-4 text-center">
-  <select 
-    disabled={!isAdmin}
-    value={entry.approvalStatus || 'Pendente'} 
-    onChange={(e) => onStatusChange(entry.id, e.target.value as any)}
-    className={`text-[10px] font-bold py-1 px-2 rounded-lg border outline-none ${
-      entry.approvalStatus === 'Aprovado' ? 'bg-green-50 text-green-700 border-green-200' :
-      entry.approvalStatus === 'Desaprovado' ? 'bg-red-50 text-red-700 border-red-200' : 
-      'bg-yellow-50 text-yellow-700 border-yellow-200'
-    }`}
-  >
-    <option value="Pendente">Pendente</option>
-    <option value="Aprovado">Aprovado</option>
-    <option value="Desaprovado">Desaprovado</option>
-  </select>
-</td>
-
-            {/* 7. AÇÕES */}
-            <td className="p-4 text-center">
-              <div className="flex justify-center gap-2">
-                {entry.documentData && (
-                  <button 
-                    className="p-2 text-slate-400 hover:text-blue-600 transition-colors" 
-                    onClick={() => openDocument(entry.documentData!)}
-                    title="Ver Documento"
+        <table className="w-full text-left text-sm border-collapse">
+          <thead>
+            <tr className="border-b border-slate-200 bg-slate-50/50">
+              <th className="p-4 text-left text-xs font-bold text-slate-500 uppercase">Data</th>
+              <th className="p-4 text-left text-xs font-bold text-slate-500 uppercase">Categoria</th>
+              <th className="p-4 text-left text-xs font-bold text-slate-500 uppercase">Descrição</th>
+              <th className="p-4 text-left text-xs font-bold text-slate-500 uppercase">Fornecedor</th>
+              <th className="p-4 text-right text-xs font-bold text-slate-500 uppercase">Valor</th>
+              <th className="p-4 text-center text-xs font-bold text-slate-500 uppercase">Status</th>
+              <th className="p-4 text-center text-xs font-bold text-slate-500 uppercase">Ações</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {filtered.map(entry => (
+              <tr key={entry.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                <td className="p-4 text-sm text-slate-600">{entry.date}</td>
+                <td className="p-4">
+                  <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-800 text-[10px] font-bold">
+                    {entry.category}
+                  </span>
+                </td>
+                <td className="p-4 text-sm text-slate-600 italic truncate max-w-[150px]" title={entry.description}>
+                  {entry.description || '-'}
+                </td>
+                <td className="p-4 text-sm font-medium text-slate-700">{entry.supplier}</td>
+                <td className="p-4 text-right font-bold text-slate-900">
+                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(entry.amount)}
+                </td>
+                <td className="p-4 text-center">
+                  <select 
+                    disabled={!isAdmin}
+                    value={entry.approvalStatus || 'Pendente'} 
+                    onChange={(e) => onStatusChange(entry.id, e.target.value as any)}
+                    className={`text-[10px] font-bold py-1 px-2 rounded-lg border outline-none ${
+                      entry.approvalStatus === 'Aprovado' ? 'bg-green-50 text-green-700 border-green-200' :
+                      entry.approvalStatus === 'Desaprovado' ? 'bg-red-50 text-red-700 border-red-200' : 
+                      'bg-yellow-50 text-yellow-700 border-yellow-200'
+                    } ${!isAdmin ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
                   >
-                    <Eye size={14} />
-                  </button>
-                )}
-                <button 
-                  className="p-2 text-slate-400 hover:text-[#00735C] transition-colors" 
-                  onClick={() => onEdit(entry)}
-                  title="Editar"
-                >
-                  <Edit size={14} />
-                </button>
-                {canDelete && (
-                  <button 
-                    className="p-2 text-slate-400 hover:text-red-600 transition-colors" 
-                    onClick={() => onDelete(entry.id)}
-                    title="Excluir"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                )}
-              </div>
-            </td>
-          </tr>
-        ))}    </tbody>
+                    <option value="Pendente">Pendente</option>
+                    <option value="Aprovado">Aprovado</option>
+                    <option value="Desaprovado">Desaprovado</option>
+                  </select>
+                </td>
+                <td className="p-4 text-center">
+                  <div className="flex justify-center gap-2">
+                    {entry.documentData && (
+                      <button className="p-2 text-slate-400 hover:text-blue-600" onClick={() => openDocument(entry.documentData!)}>
+                        <Eye size={14} />
+                      </button>
+                    )}
+                    <button className="p-2 text-slate-400 hover:text-[#00735C]" onClick={() => onEdit(entry)}>
+                      <Edit size={14} />
+                    </button>
+                    {canDelete && (
+                      <button className="p-2 text-slate-400 hover:text-red-600" onClick={() => onDelete(entry.id)}>
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
         </table>
-    </div> 
-    </div> 
-  </div> 
-  </div> 
-  </div> 
-  </div> 
+      </div>
+    </div>
   );
 }
 
