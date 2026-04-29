@@ -49,45 +49,48 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
       <div className="p-6 border-b border-slate-100 flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-slate-50/30">
         <h3 className="text-lg font-bold text-slate-900">Registro das Despesas</h3>
         
-        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+       <div className="flex flex-wrap items-center justify-center gap-6 w-full">
           <div className="flex gap-2">
-            <select 
-              className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#00735C]" 
-              value={filterCategory} 
-              onChange={(e) => setFilterCategory(e.target.value)}
-            >
-              <option value="">Categorias</option>
-              {categories.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
+           <div className="flex gap-3">
+        <select 
+          className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#00735C] min-w-[150px]" 
+          value={filterCategory} 
+          onChange={(e) => setFilterCategory(e.target.value)}
+        >
+          <option value="">Todas Categorias</option>
+          {categories.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
 
-            <select 
-              className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#00735C]" 
-              value={sortMode} 
-              onChange={(e) => setSortMode(e.target.value)}
-            >
-              <option value="desc">Recentes</option>
-              <option value="asc">Antigos</option>
-            </select>
-          </div>
-
-          <div className="flex flex-wrap gap-2 items-center border-l pl-4 border-slate-200">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Status:</span>
-            {['Todos', 'Pendente', 'Aprovado', 'Reprovado'].map((status) => (
-              <button
-                key={status}
-                onClick={() => setFilterStatus(status)}
-                className={`px-3 py-1 rounded-full text-[10px] font-bold transition-all border ${
-                  filterStatus === status 
-                    ? 'bg-[#00735C] text-white border-[#00735C]' 
-                    : 'bg-white text-slate-600 border-slate-200 hover:border-[#00735C]'
-                }`}
-              >
-                {status}
-              </button>
-            ))}
-          </div>
-        </div>
+        <select 
+          className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#00735C]" 
+          value={sortMode} 
+          onChange={(e) => setSortMode(e.target.value)}
+        >
+          <option value="desc">Mais Recentes</option>
+          <option value="asc">Mais Antigos</option>
+        </select>
       </div>
+
+         <div className="hidden md:block h-8 w-px bg-slate-200"></div>
+            <div className="flex flex-wrap gap-2 items-center justify-center">
+        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Filtrar Status:</span>
+        {['Todos', 'Pendente', 'Aprovado', 'Reprovado'].map((status) => (
+          <button
+            key={status}
+            onClick={() => setFilterStatus(status)}
+            className={`px-4 py-1.5 rounded-full text-[10px] font-bold transition-all border ${
+              filterStatus === status 
+                ? 'bg-[#00735C] text-white border-[#00735C] shadow-sm' 
+                : 'bg-white text-slate-600 border-slate-200 hover:border-[#00735C]'
+            }`}
+          >
+            {status}
+          </button>
+        ))}
+      </div>
+    </div>
+  </div>
+</div>
 
       <div className="overflow-x-auto max-h-[500px]">
         <table className="w-full text-left text-sm border-collapse">
