@@ -72,7 +72,7 @@ const isAdmin = user ? ADMIN_UIDS.includes(user.uid) : false;
       await addDoc(collection(db, 'ledger'), {
         ...data,
         category: item?.type || 'Outros',
-        approvalStatus: 'Pendente',
+        approvalStatus: 'Em analise',
         createdAt: new Date().toISOString(),
         authorUid: user?.uid || 'demo-user'
       });
