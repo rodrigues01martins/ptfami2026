@@ -129,7 +129,7 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
                     onChange={(e) => onStatusChange(entry.id, e.target.value as any)}
                     className={`text-[10px] font-bold py-1 px-2 rounded-lg border outline-none ${
                       entry.approvalStatus === 'Pendente' ? 'bg-green-50 text-green-700 border-green-200' :
-                      entry.approvalStatus === 'Aprovado' ? 'bg-lightgreen-50 text-lightgreen-700 border-lightgreen-200' :
+                      entry.approvalStatus === 'Aprovado' ? 'bg-green-50 text-green-700 border-green-200' :
                       entry.approvalStatus === 'Desaprovado' ? 'bg-red-50 text-red-700 border-red-200' : 
                       'bg-yellow-50 text-yellow-700 border-yellow-200'
                     } ${!isAdmin ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
