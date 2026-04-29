@@ -120,21 +120,21 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
 
             {/* 6. STATUS */}
             <td className="p-4 text-center">
-              <select 
-                disabled={!isAdmin}
-                value={entry.approvalStatus || 'Pendente'} 
-                onChange={(e) => onStatusChange(entry.id, e.target.value as any)}
-                className={`text-[10px] font-bold py-1 px-2 rounded-lg border outline-none ${
-                  entry.approvalStatus === 'Aprovado' ? 'bg-green-50 text-green-700 border-green-200' :
-                  entry.approvalStatus === 'Desaprovado' ? 'bg-red-50 text-red-700 border-red-200' : 
-                  'bg-yellow-50 text-yellow-700 border-yellow-200'
-                } ${!isAdmin ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
-              >
-                <option value="Pendente">Pendente</option>
-                <option value="Aprovado">Aprovado</option>
-                <option value="Desaprovado">Desaprovado</option>
-              </select>
-            </td>
+  <select 
+    disabled={!isAdmin}
+    value={entry.approvalStatus || 'Pendente'} 
+    onChange={(e) => onStatusChange(entry.id, e.target.value as any)}
+    className={`text-[10px] font-bold py-1 px-2 rounded-lg border outline-none ${
+      entry.approvalStatus === 'Aprovado' ? 'bg-green-50 text-green-700 border-green-200' :
+      entry.approvalStatus === 'Desaprovado' ? 'bg-red-50 text-red-700 border-red-200' : 
+      'bg-yellow-50 text-yellow-700 border-yellow-200'
+    }`}
+  >
+    <option value="Pendente">Pendente</option>
+    <option value="Aprovado">Aprovado</option>
+    <option value="Desaprovado">Desaprovado</option>
+  </select>
+</td>
 
             {/* 7. AÇÕES */}
             <td className="p-4 text-center">
