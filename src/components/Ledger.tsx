@@ -139,8 +139,8 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
                     <option value="Desaprovado">Desaprovado</option>
                   </select>
                 </td>
-              <td className="p-4 text-center">
-  {entry.documentData && (
+             <td className="p-4 text-center">
+  {entry.documentData &&
     <button 
       className="p-2 text-slate-400 hover:text-blue-600 transition-colors" 
       onClick={() => openDocument(entry.documentData!)}
