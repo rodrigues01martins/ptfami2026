@@ -131,7 +131,7 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
                       entry.approvalStatus === 'pendente' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
                       entry.approvalStatus === 'Aprovado' ? 'bg-green-50 text-green-700 border-green-200' :
                       entry.approvalStatus === 'Desaprovado' ? 'bg-red-50 text-red-700 border-red-200' : 
-                      'bg-yellow-50 text-yellow-700 border-yellow-200'
+                      'bg-gray-50 text-gray-700 border-gray-200'
                     } ${!isAdmin ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
                   >
                     <option value="Em analise">Em analise</option>
