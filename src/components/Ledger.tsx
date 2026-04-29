@@ -127,12 +127,17 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
                     disabled={!isAdmin}
                     value={entry.approvalStatus || 'Em analise'} 
                     onChange={(e) => onStatusChange(entry.id, e.target.value as any)}
-                    className={`text-[10px] font-bold py-1 px-2 rounded-lg border outline-none ${
-                      entry.approvalStatus === 'Pendente' ? 'bg-green-50 text-green-700 border-green-200' :
-                      entry.approvalStatus === 'Aprovado' ? 'bg-green-50 text-green-700 border-green-200' :
-                      entry.approvalStatus === 'Desaprovado' ? 'bg-red-50 text-red-700 border-red-200' : 
-                      'bg-yellow-50 text-yellow-700 border-yellow-200'
-                    } ${!isAdmin ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
+                   className={`text-[10px] font-bold py-1 px-2 rounded-lg border outline-none ${
+  entry.approvalStatus === 'Aprovado' 
+    ? 'bg-green-50 text-green-700 border-green-200' :
+  entry.approvalStatus === 'Desaprovado' 
+    ? 'bg-red-50 text-red-700 border-red-200' : 
+  entry.approvalStatus === 'Em análise' 
+    ? 'bg-slate-100 text-slate-600 border-slate-300' : // CINZA AQUI
+  entry.approvalStatus === 'Pendente' 
+    ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : // PENDENTE EXPLÍCITO
+    'bg-slate-50 text-slate-400 border-slate-200' // COR DE FUNDO CASO ESTEJA VAZIO
+} ${!isAdmin ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
                   >
                     <option value="Em analise">Em analise</option>
                     <option value="Pendente">Pendente</option>
