@@ -46,51 +46,50 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-      <div className="p-6 border-b border-slate-100 flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-slate-50/30">
-        <h3 className="text-lg font-bold text-slate-900">Registro das Despesas</h3>
+      <div className="p-6 border-b border-slate-100 bg-slate-50/30 text-center">
+        <h3 className="text-lg font-bold text-slate-900 mb-6">Registro das Despesas</h3>
         
-       <div className="flex flex-wrap items-center justify-center gap-6 w-full">
-          <div className="flex gap-2">
-           <div className="flex gap-3">
-        <select 
-          className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#00735C] min-w-[150px]" 
-          value={filterCategory} 
-          onChange={(e) => setFilterCategory(e.target.value)}
-        >
-          <option value="">Todas Categorias</option>
-          {categories.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
+        <div className="flex flex-wrap items-center justify-center gap-6 w-full">
+          <div className="flex gap-3">
+            <select 
+              className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#00735C] min-w-[150px]" 
+              value={filterCategory} 
+              onChange={(e) => setFilterCategory(e.target.value)}
+            >
+              <option value="">Todas Categorias</option>
+              {categories.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
 
-        <select 
-          className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#00735C]" 
-          value={sortMode} 
-          onChange={(e) => setSortMode(e.target.value)}
-        >
-          <option value="desc">Mais Recentes</option>
-          <option value="asc">Mais Antigos</option>
-        </select>
-      </div>
+            <select 
+              className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#00735C]" 
+              value={sortMode} 
+              onChange={(e) => setSortMode(e.target.value)}
+            >
+              <option value="desc">Mais Recentes</option>
+              <option value="asc">Mais Antigos</option>
+            </select>
+          </div>
 
-         <div className="hidden md:block h-8 w-px bg-slate-200"></div>
-            <div className="flex flex-wrap gap-2 items-center justify-center">
-        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Filtrar Status:</span>
-        {['Todos', 'Pendente', 'Aprovado', 'Reprovado'].map((status) => (
-          <button
-            key={status}
-            onClick={() => setFilterStatus(status)}
-            className={`px-4 py-1.5 rounded-full text-[10px] font-bold transition-all border ${
-              filterStatus === status 
-                ? 'bg-[#00735C] text-white border-[#00735C] shadow-sm' 
-                : 'bg-white text-slate-600 border-slate-200 hover:border-[#00735C]'
-            }`}
-          >
-            {status}
-          </button>
-        ))}
+          <div className="hidden md:block h-8 w-px bg-slate-200"></div>
+
+          <div className="flex flex-wrap gap-2 items-center justify-center">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Filtrar Status:</span>
+            {['Todos', 'Pendente', 'Aprovado', 'Reprovado'].map((status) => (
+              <button
+                key={status}
+                onClick={() => setFilterStatus(status)}
+                className={`px-4 py-1.5 rounded-full text-[10px] font-bold transition-all border ${
+                  filterStatus === status 
+                    ? 'bg-[#00735C] text-white border-[#00735C] shadow-sm' 
+                    : 'bg-white text-slate-600 border-slate-200 hover:border-[#00735C]'
+                }`}
+              >
+                {status}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-</div>
 
       <div className="overflow-x-auto max-h-[500px]">
         <table className="w-full text-left text-sm border-collapse">
@@ -139,38 +138,24 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
                     <option value="Desaprovado">Desaprovado</option>
                   </select>
                 </td>
-            <td className="p-4 text-center">
-  {entry.documentData && (
-    <button 
-      className="p-2 text-slate-400 hover:text-blue-600 transition-colors" 
-      onClick={() => openDocument(entry.documentData!)}
-      title="Ver Documento"
-    >
-      <Eye size={14} />
-    </button>
-  )}
-</td>
-                     <td className="p-4 text-center">
-  <button 
-    className="p-2 text-slate-400 hover:text-[#00735C] transition-colors" 
-    onClick={() => onEdit(entry)}
-    title="Editar"
-  >
-    <Edit size={14} />
-  </button>
-</td>
-                   <td className="p-4 text-center">
-  {canDelete && (
-    <button 
-      className="p-2 text-slate-400 hover:text-red-600 transition-colors" 
-      onClick={() => onDelete(entry.id)}
-      title="Excluir"
-    >
-      <Trash2 size={14} />
-    </button>
-  )}
-</td>
-                  </div>
+                <td className="p-4 text-center">
+                  {entry.documentData && (
+                    <button className="p-2 text-slate-400 hover:text-blue-600 transition-colors" onClick={() => openDocument(entry.documentData!)} title="Ver Documento">
+                      <Eye size={14} />
+                    </button>
+                  )}
+                </td>
+                <td className="p-4 text-center">
+                  <button className="p-2 text-slate-400 hover:text-[#00735C] transition-colors" onClick={() => onEdit(entry)} title="Editar">
+                    <Edit size={14} />
+                  </button>
+                </td>
+                <td className="p-4 text-center">
+                  {canDelete && (
+                    <button className="p-2 text-slate-400 hover:text-red-600 transition-colors" onClick={() => onDelete(entry.id)} title="Excluir">
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
