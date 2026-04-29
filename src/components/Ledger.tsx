@@ -102,7 +102,7 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
               <th className="p-4 text-right text-xs font-bold text-slate-500 uppercase">Valor</th>
               <th className="p-4 text-center text-xs font-bold text-slate-500 uppercase">Status</th>
               <th className="p-4 text-center text-xs font-bold text-slate-500 uppercase">Doc.</th>
-              <th className="p-4 text-center text-xs font-bold text-slate-500 uppercase">Editar</th>
+              <th className="p-4 text-center text-xs font-bold text-slate-500 uppercase">Editar/Corrigir</th>
               <th className="p-4 text-center text-xs font-bold text-slate-500 uppercase">Excluir</th>
             </tr>
           </thead>
