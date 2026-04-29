@@ -125,10 +125,10 @@ export function Ledger({ entries, onEdit, onDelete, onStatusChange, canDelete, i
                 <td className="p-4 text-center">
                   <select 
                     disabled={!isAdmin}
-                    value={entry.approvalStatus || 'Pendente'} 
+                    value={entry.approvalStatus || 'Em analise'} 
                     onChange={(e) => onStatusChange(entry.id, e.target.value as any)}
                     className={`text-[10px] font-bold py-1 px-2 rounded-lg border outline-none ${
-                      entry.approvalStatus === 'Em analise' ? 'bg-gray-50 text-gray-700 border-grey-200' :
+                      entry.approvalStatus === 'pendente' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
                       entry.approvalStatus === 'Aprovado' ? 'bg-green-50 text-green-700 border-green-200' :
                       entry.approvalStatus === 'Desaprovado' ? 'bg-red-50 text-red-700 border-red-200' : 
                       'bg-yellow-50 text-yellow-700 border-yellow-200'
