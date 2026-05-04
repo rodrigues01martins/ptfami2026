@@ -44,35 +44,35 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, on
   const spent = getSpentForItem(itemCode, entry.id);
   const balance = selectedItem ? selectedItem.value - spent : 0;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
     
-   let documentName = entry.documentName || "";
-   let documentData = entry.documentData || "";
+   let documentName = documentRemoved ? "" : (entry.documentName || "");
+  let documentData = documentRemoved ? "" : (entry.documentData || "");
 
-    if (file) {
-      if (file.type !== 'application/pdf') {
-        alert('O arquivo anexado precisa estar em formato PDF.');
-        return;
-      }
-      documentName = file.name;
-      documentData = await fileToDataUrl(file);
+   if (file) {
+    if (file.type !== 'application/pdf') {
+      alert('O arquivo anexado precisa estar em formato PDF.');
+      return;
     }
+    documentName = file.name;
+    documentData = await fileToDataUrl(file);
+  }
 
-    onSave({
-      ...entry,
-      itemCode,
-      nf,
-      supplier,
-      description,
-      amount: parseFloat(amount),
-      date: date.split('-').reverse().join('/'),
-      documentName,
-      documentData,
-      auditComment,
-      updatedAt: new Date().toISOString()
-    });
-  };
+   onSave({
+    ...entry,
+    itemCode,
+    nf,
+    supplier,
+    description,
+    auditComment, // Aquele que incluímos antes!
+    amount: parseFloat(amount),
+    date: date.split('-').reverse().join('/'),
+    documentName,
+    documentData,
+    updatedAt: new Date().toISOString()
+  });
+};
 
   return (
     <AnimatePresence>
@@ -186,20 +186,42 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, on
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <div className="text-xs text-slate-500 mb-2">
-                  Documento atual: <span className="font-semibold text-slate-700">{entry.documentName || 'Nenhum'}</span>
-                </div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
-                  <Upload size={12} /> Substituir Documentação (PDF)
-                </label>
-                <input 
-                  type="file" 
-                  accept="application/pdf"
-                  onChange={(e) => setFile(e.target.files?.[0] || null)}
-                  className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-[#00735C]/10 file:text-[#00735C] cursor-pointer bg-slate-50 rounded-xl"
-                />
-              </div>
+             <div className="space-y-2">
+  <div className="text-xs text-slate-500 mb-2 flex items-center justify-between bg-slate-50 p-2 rounded-lg border border-dashed border-slate-200">
+    <span>
+      Documento atual: <span className="font-semibold text-slate-700">
+        {documentRemoved ? 'Removido (vazio)' : (entry.documentName || 'Nenhum')}
+      </span>
+    </span>
+    
+    {/* Botão de Excluir Documento Atual */}
+    {!documentRemoved && entry.documentData && (
+      <button
+        type="button"
+        onClick={() => {
+          setDocumentRemoved(true);
+          setFile(null); // Limpa também qualquer arquivo novo selecionado
+        }}
+        className="text-red-500 hover:text-red-700 font-bold text-[10px] uppercase tracking-tighter transition-colors"
+      >
+        Excluir Arquivo
+      </button>
+    )}
+  </div>
+
+  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+    <Upload size={12} /> {entry.documentData ? 'Substituir Documentação (PDF)' : 'Anexar Documentação (PDF)'}
+  </label>
+  <input 
+    type="file" 
+    accept="application/pdf"
+    onChange={(e) => {
+      setFile(e.target.files?.[0] || null);
+      if (e.target.files?.[0]) setDocumentRemoved(false); // Se anexar novo, cancela a remoção
+    }}
+    className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-[#00735C]/10 file:text-[#00735C] cursor-pointer bg-slate-50 rounded-xl"
+  />
+</div>
 
 <div>
   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
