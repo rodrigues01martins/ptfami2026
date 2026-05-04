@@ -34,6 +34,7 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, on
       setAmount(entry.amount.toString());
       setDate(formatDateForInput(entry.date));
       setAuditComment(entry.auditComment || '');
+      setDocumentRemoved(false);
       setFile(null);
     }
   }, [entry]);
