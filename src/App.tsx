@@ -25,8 +25,8 @@ export function App() {
   const [toast, setToast] = useState({ message: '', isVisible: false });
   const [editingEntry, setEditingEntry] = useState<LedgerEntry | null>(null);
 
- const ADMIN_UIDS = ["lba3ydI19fPRDIXF09zXFI7oV8x2", "DfGvSS1g2oPlbLf5y0zazf9LYSx2"];
-const isAdmin = user ? ADMIN_UIDS.includes(user.uid) : false;
+  const ADMIN_UIDS = ["lba3ydI19fPRDIXF09zXFI7oV8x2", "DfGvSS1g2oPlbLf5y0zazf9LYSx2"];
+  const isAdmin = user ? ADMIN_UIDS.includes(user.uid) : false;
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -51,39 +51,92 @@ const isAdmin = user ? ADMIN_UIDS.includes(user.uid) : false;
     setTimeout(() => setToast(prev => ({ ...prev, isVisible: false })), 3000);
   };
 
+  // ─── FIX 1: Exportação CSV corrigida ──────────────────────────────────────
   const handleExportCSV = () => {
-    if (ledgerEntries.length === 0) return showToast("Não há dados.");
-    const headers = "Data Lancamento;Data Despesa;Item;Fornecedor;NF;Valor;Categoria;Descricao\n";
+    if (ledgerEntries.length === 0) return showToast("Não há dados para exportar.");
+
+    const headers = [
+      "Data Lançamento",
+      "Data Despesa",
+      "Código Item",
+      "Fornecedor",
+      "NF",
+      "Valor",
+      "Categoria",
+      "Grupo",
+      "Etapa",
+      "Status",
+      "Descrição"
+    ].join(";");
+
     const rows = ledgerEntries.map(e => {
-      const lancamento = e.createdAt ? new Date(e.createdAt).toLocaleDateString('pt-BR') : '---';
-      const valorExcel = e.amount.toString().replace('.', ',');
-      return `${lancamento};${e.date};${e.itemCode};${e.supplier};${e.nf || ''};${valorExcel};${e.category};${e.description || ''}`;
-    }).join("\n");
-    const blob = new Blob(["\ufeff" + headers + rows], { type: 'text/csv;charset=utf-8;' });
+      const lancamento = e.createdAt
+        ? new Date(e.createdAt).toLocaleDateString('pt-BR')
+        : '---';
+      // Valor formatado para Excel BR (vírgula decimal, sem símbolo)
+      const valorExcel = e.amount.toFixed(2).replace('.', ',');
+      // Escapar campos com ponto-e-vírgula ou aspas
+      const esc = (v: string | undefined | null) => {
+        const s = String(v ?? '');
+        return s.includes(';') || s.includes('"') || s.includes('\n')
+          ? `"${s.replace(/"/g, '""')}"`
+          : s;
+      };
+      return [
+        lancamento,
+        esc(e.date),
+        esc(e.itemCode),
+        esc(e.supplier),
+        esc(e.nf),
+        valorExcel,
+        esc(e.category),
+        esc(e.group),
+        esc(e.stage),
+        esc(e.approvalStatus),
+        esc(e.description)
+      ].join(";");
+    });
+
+    const csvContent = "\ufeff" + headers + "\n" + rows.join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.setAttribute('download', `Relatorio_SEDS_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`);
+    link.href = url;
+    link.setAttribute(
+      'download',
+      `Relatorio_SEDS_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`
+    );
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showToast("CSV exportado com sucesso!");
   };
 
- const handleAddEntry = async (data: any) => {
+  const handleAddEntry = async (data: any) => {
     try {
       const item = BUDGET_DATA.find(i => i.id === data.itemCode);
       await addDoc(collection(db, 'ledger'), {
         ...data,
         category: item?.type || 'Outros',
+        group: item?.group || '',
+        stage: item?.stage || '',
         approvalStatus: 'Em analise',
         createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
         authorUid: user?.uid || 'demo-user'
       });
       showToast("Registro salvo!");
-      } catch (e) { showToast("Erro ao gravar."); }
+    } catch (e) { showToast("Erro ao gravar."); }
   };
 
   const handleUpdateEntry = async (updated: LedgerEntry) => {
     try {
       const { id, ...dataToSave } = updated;
-      await updateDoc(doc(db, 'ledger', id), dataToSave);
+      await updateDoc(doc(db, 'ledger', id), {
+        ...dataToSave,
+        updatedAt: new Date().toISOString()
+      });
       setEditingEntry(null);
       showToast("Atualizado com sucesso!");
     } catch (e) { showToast("Erro ao atualizar."); }
@@ -92,7 +145,10 @@ const isAdmin = user ? ADMIN_UIDS.includes(user.uid) : false;
   const handleStatusChange = async (id: string, status: LedgerEntry['approvalStatus']) => {
     if (!isAdmin) return showToast("Acesso negado.");
     try {
-      await updateDoc(doc(db, 'ledger', id), { approvalStatus: status });
+      await updateDoc(doc(db, 'ledger', id), {
+        approvalStatus: status,
+        updatedAt: new Date().toISOString()
+      });
       showToast(`Status: ${status}`);
     } catch (e) { showToast("Erro ao atualizar status."); }
   };
@@ -107,10 +163,54 @@ const isAdmin = user ? ADMIN_UIDS.includes(user.uid) : false;
     }
   };
 
+  const handleUpdateAuditComment = async (id: string, comment: string) => {
+    if (!isAdmin) return;
+    try {
+      await updateDoc(doc(db, 'ledger', id), {
+        auditComment: comment,
+        updatedAt: new Date().toISOString()
+      });
+      showToast("Observação salva.");
+    } catch (e) { showToast("Erro ao salvar observação."); }
+  };
+
+  // ─── FIX 2 & 3: criticalItems e lastAudit calculados corretamente ──────────
   const totals = useMemo(() => {
     const totalOrcado = BUDGET_DATA.reduce((acc, i) => acc + (i.value || 0), 0);
     const totalExecutado = ledgerEntries.reduce((acc, i) => acc + i.amount, 0);
-    return { totalOrcado, totalExecutado, totalSaldo: totalOrcado - totalExecutado, percentTotal: (totalExecutado / totalOrcado) * 100 || 0 };
+
+    // Itens críticos: saldo <= 0 OU saldo <= 10% do orçado
+    const criticalItems = BUDGET_DATA.filter(item => {
+      const gasto = ledgerEntries
+        .filter(e => e.itemCode === item.id)
+        .reduce((acc, e) => acc + e.amount, 0);
+      const saldo = item.value - gasto;
+      return saldo <= 0 || saldo / item.value <= 0.1;
+    }).length;
+
+    // Última atualização: maior updatedAt ou createdAt entre todos os registros
+    const lastAudit = ledgerEntries.reduce<string>((latest, entry) => {
+      const ts = entry.updatedAt || entry.createdAt || '';
+      if (!ts) return latest;
+      if (!latest) return ts;
+      return ts > latest ? ts : latest;
+    }, '');
+
+    const lastAuditFormatted = lastAudit
+      ? new Date(lastAudit).toLocaleString('pt-BR', {
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        })
+      : '-';
+
+    return {
+      totalOrcado,
+      totalExecutado,
+      totalSaldo: totalOrcado - totalExecutado,
+      percentTotal: (totalExecutado / totalOrcado) * 100 || 0,
+      criticalItems,
+      lastAudit: lastAuditFormatted,
+    };
   }, [ledgerEntries]);
 
   const chartData = useMemo(() => {
@@ -127,32 +227,36 @@ const isAdmin = user ? ADMIN_UIDS.includes(user.uid) : false;
     const stages = [...new Set(BUDGET_DATA.map(i => i.stage))];
 
     return {
-      category: { labels: categories, previsto: categories.map(c => BUDGET_DATA.filter(i => i.type === c).reduce((acc, i) => acc + (i.value || 0), 0)), executado: categories.map(c => ledgerEntries.filter(e => e.category === c).reduce((acc, e) => acc + e.amount, 0)) },
-      month: { labels: Array.from(monthlyMap.keys()).sort(), executado: Array.from(monthlyMap.values()) },
-      group: { labels: groups, previsto: groups.map(g => BUDGET_DATA.filter(i => i.group === g).reduce((acc, i) => acc + (i.value || 0), 0)), executado: groups.map(g => ledgerEntries.reduce((acc, e) => BUDGET_DATA.find(i => i.id === e.itemCode)?.group === g ? acc + e.amount : acc, 0)) },
-      stage: { labels: stages, previsto: stages.map(s => BUDGET_DATA.filter(i => i.stage === s).reduce((acc, i) => acc + (i.value || 0), 0)), executado: stages.map(s => ledgerEntries.reduce((acc, e) => BUDGET_DATA.find(i => i.id === e.itemCode)?.stage === s ? acc + e.amount : acc, 0)) }
+      category: {
+        labels: categories,
+        previsto: categories.map(c => BUDGET_DATA.filter(i => i.type === c).reduce((acc, i) => acc + (i.value || 0), 0)),
+        executado: categories.map(c => ledgerEntries.filter(e => e.category === c).reduce((acc, e) => acc + e.amount, 0))
+      },
+      month: {
+        labels: Array.from(monthlyMap.keys()).sort(),
+        executado: Array.from(monthlyMap.values())
+      },
+      group: {
+        labels: groups,
+        previsto: groups.map(g => BUDGET_DATA.filter(i => i.group === g).reduce((acc, i) => acc + (i.value || 0), 0)),
+        executado: groups.map(g => ledgerEntries.reduce((acc, e) => BUDGET_DATA.find(i => i.id === e.itemCode)?.group === g ? acc + e.amount : acc, 0))
+      },
+      stage: {
+        labels: stages,
+        previsto: stages.map(s => BUDGET_DATA.filter(i => i.stage === s).reduce((acc, i) => acc + (i.value || 0), 0)),
+        executado: stages.map(s => ledgerEntries.reduce((acc, e) => BUDGET_DATA.find(i => i.id === e.itemCode)?.stage === s ? acc + e.amount : acc, 0))
+      }
     };
   }, [ledgerEntries]);
-  
-const filteredEntries = useMemo(() => {
-  return ledgerEntries.filter(entry => 
-    filterStatus === 'Todos' || entry.approvalStatus === filterStatus
-  );
-}, [ledgerEntries, filterStatus]);
-  
-  const handleUpdateAuditComment = async (id: string, comment: string) => {
-    if (!isAdmin) return;
-    try {
-      const docRef = doc(db, 'ledger', id);
-      await updateDoc(docRef, { auditComment: comment });
-      showToast("Observação salva.");
-    } catch (e) {
-      showToast("Erro ao salvar observação.");
-    }
-  };
 
-  if (!isAuthReady) return <div className="min-h-screen flex items-center justify-center bg-slate-50 font-bold text-[#00735C]">Iniciando SEDS...</div>;
-  if (!user && !isDemoMode) return <Login onDemoMode={() => setIsDemoMode(true)} showToast={showToast} />;
+  if (!isAuthReady) return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 font-bold text-[#00735C]">
+      Iniciando SEDS...
+    </div>
+  );
+  if (!user && !isDemoMode) return (
+    <Login onDemoMode={() => setIsDemoMode(true)} showToast={showToast} />
+  );
 
   return (
     <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8">
@@ -161,14 +265,29 @@ const filteredEntries = useMemo(() => {
           <div className="flex items-center gap-2 text-slate-500 bg-white px-3 py-1 rounded-full border text-xs font-bold">
             <UserIcon size={12} /> {user?.email || 'Modo Visualização'}
           </div>
-          <button onClick={() => signOut(auth)} className="text-red-600 text-xs font-bold hover:bg-red-50 p-1 px-3 rounded-full transition-all">Sair</button>
+          <button
+            onClick={() => signOut(auth)}
+            className="text-red-600 text-xs font-bold hover:bg-red-50 p-1 px-3 rounded-full transition-all"
+          >
+            Sair
+          </button>
         </div>
 
         <Header onExportCSV={handleExportCSV} />
-        
+
         <div className="mb-8 flex gap-3">
-          <button onClick={() => setActiveTab('entry')} className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'entry' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}>Incluir Registros</button>
-          <button onClick={() => setActiveTab('report')} className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'report' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}>Ambiente do Relatório</button>
+          <button
+            onClick={() => setActiveTab('entry')}
+            className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'entry' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}
+          >
+            Incluir Registros
+          </button>
+          <button
+            onClick={() => setActiveTab('report')}
+            className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'report' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}
+          >
+            Ambiente do Relatório
+          </button>
         </div>
 
         {activeTab === 'entry' ? (
@@ -177,18 +296,31 @@ const filteredEntries = useMemo(() => {
           </div>
         ) : (
           <div className="space-y-10">
-            <SummaryCards {...totals} totalRecords={ledgerEntries.length} lastAudit="-" criticalItems={0} />
+            <SummaryCards
+              totalOrcado={totals.totalOrcado}
+              totalExecutado={totals.totalExecutado}
+              totalSaldo={totals.totalSaldo}
+              percentTotal={totals.percentTotal}
+              totalRecords={ledgerEntries.length}
+              lastAudit={totals.lastAudit}
+              criticalItems={totals.criticalItems}
+            />
             <div className="w-full">
-              <Charts categoryData={chartData.category} monthData={chartData.month} groupData={chartData.group} stageData={chartData.stage} />
+              <Charts
+                categoryData={chartData.category}
+                monthData={chartData.month}
+                groupData={chartData.group}
+                stageData={chartData.stage}
+              />
             </div>
-            <Ledger 
-              entries={ledgerEntries} 
-              onEdit={(entry) => setEditingEntry(entry)} 
+            <Ledger
+              entries={ledgerEntries}
+              onEdit={(entry) => setEditingEntry(entry)}
               onDelete={handleDeleteEntry}
               onStatusChange={handleStatusChange}
               onUpdateComment={handleUpdateAuditComment}
-              canDelete={isAdmin} 
-              isAdmin={isAdmin} 
+              canDelete={isAdmin}
+              isAdmin={isAdmin}
             />
             <div className="w-full">
               <BudgetStatus entries={ledgerEntries} />
@@ -198,12 +330,16 @@ const filteredEntries = useMemo(() => {
       </div>
 
       {editingEntry && (
-        <EditModal 
-          isOpen={true} 
-          onClose={() => setEditingEntry(null)} 
-          entry={editingEntry} 
+        <EditModal
+          isOpen={true}
+          onClose={() => setEditingEntry(null)}
+          entry={editingEntry}
           onSave={handleUpdateEntry}
-          getSpentForItem={(code, id) => ledgerEntries.filter(e => e.itemCode === code && e.id !== id).reduce((acc, e) => acc + e.amount, 0)}
+          getSpentForItem={(code, id) =>
+            ledgerEntries
+              .filter(e => e.itemCode === code && e.id !== id)
+              .reduce((acc, e) => acc + e.amount, 0)
+          }
         />
       )}
       <Toast message={toast.message} isVisible={toast.isVisible} />
@@ -212,3 +348,4 @@ const filteredEntries = useMemo(() => {
 }
 
 export default App;
+
