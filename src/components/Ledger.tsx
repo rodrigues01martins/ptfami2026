@@ -23,7 +23,7 @@ export function Ledger({
   isAdmin,
 }: LedgerProps) {
   const [filterCategory, setFilterCategory] = useState('');
-  const [filterItemCode, setFilterItemCode] = useState('');    // FIX 4: novo filtro
+  const [filterItemCode, setFilterItemCode] = useState('');
   const [sortMode, setSortMode] = useState('desc');
   const [filterStatus, setFilterStatus] = useState<string>('Todos');
 
@@ -63,32 +63,29 @@ export function Ledger({
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-      {/* ── Cabeçalho e filtros ── */}
-      <div className="p-6 border-b border-slate-100 bg-slate-50/30">
-        <h3 className="text-lg font-bold text-slate-900 mb-5 text-center">
+
+      {/* ── Cabeçalho ── */}
+      <div className="px-6 pt-5 pb-4 border-b border-slate-100 bg-slate-50/30">
+        <h3 className="text-lg font-bold text-slate-900 mb-4 text-center">
           Registro das Despesas
         </h3>
 
-        {/* Linha 1: filtros de categoria, item e ordenação */}
-        <div className="flex flex-wrap items-center gap-3 mb-4">
-          {/* Filtro por categoria */}
+        {/* ── Barra única de filtros ── */}
+        <div className="flex flex-wrap items-center gap-2">
+
+          {/* Categoria */}
           <select
-            className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#00735C] min-w-[160px]"
+            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#00735C] min-w-[150px]"
             value={filterCategory}
-            onChange={e => {
-              setFilterCategory(e.target.value);
-              setFilterItemCode(''); // limpa item ao trocar categoria
-            }}
+            onChange={e => { setFilterCategory(e.target.value); setFilterItemCode(''); }}
           >
             <option value="">Todas as Categorias</option>
-            {categories.map(c => (
-              <option key={c} value={c}>{c}</option>
-            ))}
+            {categories.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
 
-          {/* FIX 4: Filtro por item do plano de trabalho */}
+          {/* Item do plano */}
           <select
-            className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#00735C] min-w-[260px] max-w-xs"
+            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#00735C] min-w-[220px] flex-1 max-w-xs"
             value={filterItemCode}
             onChange={e => setFilterItemCode(e.target.value)}
           >
@@ -97,14 +94,14 @@ export function Ledger({
               .filter(item => !filterCategory || item.type === filterCategory)
               .map(item => (
                 <option key={item.id} value={item.id}>
-                  {item.id} — {item.desc.length > 45 ? item.desc.slice(0, 45) + '…' : item.desc}
+                  {item.id} — {item.desc.length > 40 ? item.desc.slice(0, 40) + '…' : item.desc}
                 </option>
               ))}
           </select>
 
           {/* Ordenação */}
           <select
-            className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#00735C]"
+            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#00735C]"
             value={sortMode}
             onChange={e => setSortMode(e.target.value)}
           >
@@ -114,30 +111,34 @@ export function Ledger({
             <option value="amount_asc">Menor Valor</option>
           </select>
 
-          {/* Contador de resultados */}
-          <span className="ml-auto text-[11px] text-slate-400 font-semibold">
+          {/* Divisor visual */}
+          <div className="hidden md:block h-6 w-px bg-slate-200 mx-1" />
+
+          {/* Botões de status — mesma linha */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-0.5">
+              Status:
+            </span>
+            {['Todos', 'Em analise', 'Pendente', 'Aprovado', 'Desaprovado'].map(status => (
+              <button
+                key={status}
+                onClick={() => setFilterStatus(status)}
+                className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border whitespace-nowrap ${
+                  filterStatus === status
+                    ? 'bg-[#00735C] text-white border-[#00735C] shadow-sm'
+                    : 'bg-white text-slate-600 border-slate-200 hover:border-[#00735C]'
+                }`}
+              >
+                {status}
+              </button>
+            ))}
+          </div>
+
+          {/* Contador — empurrado para a direita */}
+          <span className="ml-auto text-[11px] text-slate-400 font-semibold whitespace-nowrap">
             {filtered.length} registro{filtered.length !== 1 ? 's' : ''}
           </span>
-        </div>
 
-        {/* Linha 2: filtros de status */}
-        <div className="flex flex-wrap gap-2 items-center">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mr-1">
-            Status:
-          </span>
-          {['Todos', 'Em analise', 'Pendente', 'Aprovado', 'Desaprovado'].map(status => (
-            <button
-              key={status}
-              onClick={() => setFilterStatus(status)}
-              className={`px-4 py-1.5 rounded-full text-[10px] font-bold transition-all border ${
-                filterStatus === status
-                  ? 'bg-[#00735C] text-white border-[#00735C] shadow-sm'
-                  : 'bg-white text-slate-600 border-slate-200 hover:border-[#00735C]'
-              }`}
-            >
-              {status}
-            </button>
-          ))}
         </div>
       </div>
 
@@ -167,50 +168,32 @@ export function Ledger({
               </tr>
             ) : (
               filtered.map(entry => (
-                <tr
-                  key={entry.id}
-                  className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
-                >
+                <tr key={entry.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                   <td className="p-4 text-sm text-slate-600 whitespace-nowrap">{entry.date}</td>
-
-                  {/* Coluna do item do plano */}
                   <td className="p-4 whitespace-nowrap">
                     <span className="px-2 py-1 rounded-md bg-[#00735C]/10 text-[#00735C] text-[11px] font-bold">
                       {entry.itemCode}
                     </span>
                   </td>
-
                   <td className="p-4">
                     <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-800 text-[10px] font-bold">
                       {entry.category}
                     </span>
                   </td>
-
-                  <td
-                    className="p-4 text-sm text-slate-600 italic truncate max-w-[150px]"
-                    title={entry.description}
-                  >
+                  <td className="p-4 text-sm text-slate-600 italic truncate max-w-[150px]" title={entry.description}>
                     {entry.description || '-'}
                   </td>
-
                   <td className="p-4 text-sm font-medium text-slate-700 whitespace-nowrap">
                     {entry.supplier || '-'}
                   </td>
-
                   <td className="p-4 text-right font-bold text-slate-900 whitespace-nowrap">
-                    {new Intl.NumberFormat('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL',
-                    }).format(entry.amount)}
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(entry.amount)}
                   </td>
-
                   <td className="p-4 text-center">
                     <select
                       disabled={!isAdmin}
                       value={entry.approvalStatus || 'Em analise'}
-                      onChange={e =>
-                        onStatusChange(entry.id, e.target.value as LedgerEntry['approvalStatus'])
-                      }
+                      onChange={e => onStatusChange(entry.id, e.target.value as LedgerEntry['approvalStatus'])}
                       className={`text-[10px] font-bold py-1 px-2 rounded-lg border outline-none ${
                         entry.approvalStatus === 'Aprovado'
                           ? 'bg-green-50 text-green-700 border-green-200'
@@ -227,7 +210,6 @@ export function Ledger({
                       <option value="Desaprovado">Desaprovado</option>
                     </select>
                   </td>
-
                   <td className="p-4 text-center">
                     {entry.documentData && (
                       <button
@@ -239,7 +221,6 @@ export function Ledger({
                       </button>
                     )}
                   </td>
-
                   <td className="p-4 text-center">
                     <button
                       className="p-2 text-slate-400 hover:text-[#00735C] transition-colors"
@@ -249,7 +230,6 @@ export function Ledger({
                       <Edit size={14} />
                     </button>
                   </td>
-
                   <td className="p-4 text-center">
                     {canDelete && (
                       <button
