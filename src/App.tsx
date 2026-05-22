@@ -51,49 +51,30 @@ export function App() {
     setTimeout(() => setToast(prev => ({ ...prev, isVisible: false })), 3000);
   };
 
-  // ─── FIX 1: Exportação CSV corrigida ──────────────────────────────────────
   const handleExportCSV = () => {
     if (ledgerEntries.length === 0) return showToast("Não há dados para exportar.");
 
     const headers = [
-      "Data Lançamento",
-      "Data Despesa",
-      "Código Item",
-      "Fornecedor",
-      "NF",
-      "Valor",
-      "Categoria",
-      "Grupo",
-      "Etapa",
-      "Status",
-      "Descrição"
+      "Data Lançamento", "Data Despesa", "Código Item",
+      "Fornecedor", "NF", "Valor", "Categoria",
+      "Grupo", "Etapa", "Status", "Descrição"
     ].join(";");
 
     const rows = ledgerEntries.map(e => {
       const lancamento = e.createdAt
         ? new Date(e.createdAt).toLocaleDateString('pt-BR')
         : '---';
-      // Valor formatado para Excel BR (vírgula decimal, sem símbolo)
-      const valorExcel = e.amount.toFixed(2).replace('.', ',');
-      // Escapar campos com ponto-e-vírgula ou aspas
+      const valorExcel = (Number(e.amount) || 0).toFixed(2).replace('.', ',');
       const esc = (v: string | undefined | null) => {
         const s = String(v ?? '');
         return s.includes(';') || s.includes('"') || s.includes('\n')
-          ? `"${s.replace(/"/g, '""')}"`
-          : s;
+          ? `"${s.replace(/"/g, '""')}"` : s;
       };
       return [
-        lancamento,
-        esc(e.date),
-        esc(e.itemCode),
-        esc(e.supplier),
-        esc(e.nf),
-        valorExcel,
-        esc(e.category),
-        esc(e.group),
-        esc(e.stage),
-        esc(e.approvalStatus),
-        esc(e.description)
+        lancamento, esc(e.date), esc(e.itemCode),
+        esc(e.supplier), esc(e.nf), valorExcel,
+        esc(e.category), esc(e.group), esc(e.stage),
+        esc(e.approvalStatus), esc(e.description)
       ].join(";");
     });
 
@@ -102,10 +83,7 @@ export function App() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute(
-      'download',
-      `Relatorio_SEDS_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`
-    );
+    link.setAttribute('download', `Relatorio_SEDS_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -174,30 +152,30 @@ export function App() {
     } catch (e) { showToast("Erro ao salvar observação."); }
   };
 
-  // ─── FIX 2 & 3: criticalItems e lastAudit calculados corretamente ──────────
+  // ─── totals: criticalItems e lastAudit corrigidos ─────────────────────────
   const totals = useMemo(() => {
     const totalOrcado = BUDGET_DATA.reduce((acc, i) => acc + (i.value || 0), 0);
-    const totalExecutado = ledgerEntries.reduce((acc, i) => acc + i.amount, 0);
+    const totalExecutado = ledgerEntries.reduce((acc, i) => acc + (Number(i.amount) || 0), 0);
 
-    // Itens críticos: saldo <= 0 OU saldo <= 10% do orçado
+    // Normaliza strings para evitar falha por espaços ou maiúsculas
     const criticalItems = BUDGET_DATA.filter(item => {
       const gasto = ledgerEntries
-        .filter(e => e.itemCode === item.id)
-        .reduce((acc, e) => acc + e.amount, 0);
+        .filter(e => String(e.itemCode).trim() === String(item.id).trim())
+        .reduce((acc, e) => acc + (Number(e.amount) || 0), 0);
       const saldo = item.value - gasto;
       return saldo <= 0 || saldo / item.value <= 0.1;
     }).length;
 
-    // Última atualização: maior updatedAt ou createdAt entre todos os registros
-    const lastAudit = ledgerEntries.reduce<string>((latest, entry) => {
+    // Última atualização: usa updatedAt se existir, senão createdAt (registros antigos)
+    const lastTs = ledgerEntries.reduce<string>((latest, entry) => {
       const ts = entry.updatedAt || entry.createdAt || '';
       if (!ts) return latest;
       if (!latest) return ts;
       return ts > latest ? ts : latest;
     }, '');
 
-    const lastAuditFormatted = lastAudit
-      ? new Date(lastAudit).toLocaleString('pt-BR', {
+    const lastAudit = lastTs
+      ? new Date(lastTs).toLocaleString('pt-BR', {
           day: '2-digit', month: '2-digit', year: 'numeric',
           hour: '2-digit', minute: '2-digit'
         })
@@ -207,9 +185,9 @@ export function App() {
       totalOrcado,
       totalExecutado,
       totalSaldo: totalOrcado - totalExecutado,
-      percentTotal: (totalExecutado / totalOrcado) * 100 || 0,
+      percentTotal: totalOrcado > 0 ? (totalExecutado / totalOrcado) * 100 : 0,
       criticalItems,
-      lastAudit: lastAuditFormatted,
+      lastAudit,
     };
   }, [ledgerEntries]);
 
@@ -348,4 +326,3 @@ export function App() {
 }
 
 export default App;
-
