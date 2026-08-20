@@ -254,7 +254,7 @@ export function App() {
             onClick={() => setActiveTab('report')}
             className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'report' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}
           >
-            Visão Geral
+            Ambiente do Relatório
           </button>
           <button
             onClick={() => setActiveTab('relatorio')}
@@ -266,9 +266,7 @@ export function App() {
 
         {/* ── Aba: Incluir Registros ── */}
         {activeTab === 'entry' && (
-          <div className="max-w-4xl mx-auto">
-            <ExpenseForm onAdd={handleAddEntry} showToast={showToast} />
-          </div>
+          <ExpenseForm onAdd={handleAddEntry} showToast={showToast} />
         )}
 
         {/* ── Aba: Ambiente do Relatório ── */}
