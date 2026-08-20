@@ -256,12 +256,15 @@ export function App() {
           >
             Ambiente do Relatório
           </button>
-          <button
-            onClick={() => setActiveTab('relatorio')}
-            className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'relatorio' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}
-          >
-            Relatório Final
-          </button>
+          {/* Aba Relatório Final — visível apenas para admins */}
+          {isAdmin && (
+            <button
+              onClick={() => setActiveTab('relatorio')}
+              className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'relatorio' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}
+            >
+              Relatório Final
+            </button>
+          )}
         </div>
 
         {/* ── Aba: Incluir Registros ── */}
@@ -304,9 +307,18 @@ export function App() {
           </div>
         )}
 
-        {/* ── Aba: Relatório Final ── */}
-        {activeTab === 'relatorio' && (
+        {/* ── Aba: Relatório Final — acesso restrito a admins ── */}
+        {activeTab === 'relatorio' && isAdmin && (
           <RelatorioFinal onBack={() => setActiveTab('entry')} />
+        )}
+        {activeTab === 'relatorio' && !isAdmin && (
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mb-4">
+              <span className="text-3xl">🔒</span>
+            </div>
+            <h2 className="text-xl font-bold text-slate-700 mb-2">Acesso restrito</h2>
+            <p className="text-slate-400 text-sm">Esta seção é exclusiva para administradores do sistema.</p>
+          </div>
         )}
 
       </div>
