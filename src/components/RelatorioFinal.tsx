@@ -21,8 +21,6 @@ const FIXED = {
 };
 
 const ANEXOS_LIST = [
-  "Matriz de Indicadores preenchida e assinada",
-  "Relatórios técnicos mensais e comprovantes de protocolo",
   "Evidências da implantação física, logística e tecnológica",
   "Relatórios extraídos do SGV e mapa de vagas, sem exposição indevida de dados pessoais",
   "Demonstrativos de PIA, escolarização, saúde, documentação civil e vínculos familiares",
@@ -105,7 +103,7 @@ const initialState = {
   dificuldades: { linhas: [{ meta: "", desvio: "", causa: "", medida: "", resultado: "" }] },
   conclusao: { status: "integralmente cumprido", qtdAtingida: "", qtdParcial: "", qtdNao: "", continuidade: "" },
   declaracao: { municipio: "", data: "", nome: "", cargo: "Fundação de Apoio ao Menor Inhumense – FAMI" },
-  anexos: { checks: Array(10).fill(false) as boolean[] }
+  anexos: { checks: Array(8).fill(false) as boolean[] }
 };
 
 type AppState = typeof initialState;
@@ -210,7 +208,7 @@ const SecResumo = ({ s, set }: { s: AppState; set: (fn: (p: AppState) => AppStat
     <SectionHead n={2} title="Resumo executivo"
       sub="Em até 15 linhas: finalidade da parceria, implantação realizada, quantitativo de adolescentes atendidos, continuidade do serviço, principais resultados, metas não atingidas, intercorrências relevantes, situação financeira sintética e conclusão sobre o cumprimento do objeto." />
     <Card>
-      <Field label="Síntese da OSC" hint="até ~15 linhas" textarea value={s.resumo.texto}
+      <Field label="Síntese da OSC" hint="até ~20 linhas" textarea value={s.resumo.texto}
         onChange={v => set(p => ({ ...p, resumo: { texto: v } }))} />
     </Card>
   </>
