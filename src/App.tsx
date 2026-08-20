@@ -14,6 +14,7 @@ import { Login } from './components/Login';
 import { BUDGET_DATA } from './constants';
 import { LedgerEntry } from './types';
 import { User as UserIcon } from 'lucide-react';
+import RelatorioFinal from './components/RelatorioFinal';
 
 export function App() {
   const [user, setUser] = useState<User | null>(null);
