@@ -16,17 +16,16 @@ import { LedgerEntry } from './types';
 import { User as UserIcon } from 'lucide-react';
 import RelatorioFinal from './components/RelatorioFinal';
 
-
 export function App() {
   const [user, setUser] = useState<User | null>(null);
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [isAuthReady, setIsAuthReady] = useState(false);
-  const [activeTab, setActiveTab] = useState<'entry' | 'report'>('entry');
+  // ── activeTab com as 3 abas (declarado UMA única vez) ──
+  const [activeTab, setActiveTab] = useState<'entry' | 'report' | 'relatorio'>('entry');
   const [filterStatus, setFilterStatus] = useState<LedgerEntry['approvalStatus'] | 'Todos'>('Todos');
   const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>([]);
   const [toast, setToast] = useState({ message: '', isVisible: false });
   const [editingEntry, setEditingEntry] = useState<LedgerEntry | null>(null);
-  const [activeTab, setActiveTab] = useState<'entry' | 'report' | 'relatorio'>('entry');
 
   const ADMIN_UIDS = ["lba3ydI19fPRDIXF09zXFI7oV8x2", "DfGvSS1g2oPlbLf5y0zazf9LYSx2", "zTGXyZqsYghjUSfg0ptoEFKiCCc2"];
   const isAdmin = user ? ADMIN_UIDS.includes(user.uid) : false;
@@ -56,17 +55,13 @@ export function App() {
 
   const handleExportCSV = () => {
     if (ledgerEntries.length === 0) return showToast("Não há dados para exportar.");
-
     const headers = [
       "Data Lançamento", "Data Despesa", "Código Item",
       "Fornecedor", "NF", "Valor", "Categoria",
       "Grupo", "Etapa", "Status", "Descrição"
     ].join(";");
-
     const rows = ledgerEntries.map(e => {
-      const lancamento = e.createdAt
-        ? new Date(e.createdAt).toLocaleDateString('pt-BR')
-        : '---';
+      const lancamento = e.createdAt ? new Date(e.createdAt).toLocaleDateString('pt-BR') : '---';
       const valorExcel = (Number(e.amount) || 0).toFixed(2).replace('.', ',');
       const esc = (v: string | undefined | null) => {
         const s = String(v ?? '');
@@ -80,7 +75,6 @@ export function App() {
         esc(e.approvalStatus), esc(e.description)
       ].join(";");
     });
-
     const csvContent = "\ufeff" + headers + "\n" + rows.join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -155,12 +149,9 @@ export function App() {
     } catch (e) { showToast("Erro ao salvar observação."); }
   };
 
-  // ─── totals: criticalItems e lastAudit corrigidos ─────────────────────────
   const totals = useMemo(() => {
     const totalOrcado = BUDGET_DATA.reduce((acc, i) => acc + (i.value || 0), 0);
     const totalExecutado = ledgerEntries.reduce((acc, i) => acc + (Number(i.amount) || 0), 0);
-
-    // Normaliza strings para evitar falha por espaços ou maiúsculas
     const criticalItems = BUDGET_DATA.filter(item => {
       const gasto = ledgerEntries
         .filter(e => String(e.itemCode).trim() === String(item.id).trim())
@@ -168,29 +159,23 @@ export function App() {
       const saldo = item.value - gasto;
       return saldo <= 0 || saldo / item.value <= 0.1;
     }).length;
-
-    // Última atualização: usa updatedAt se existir, senão createdAt (registros antigos)
     const lastTs = ledgerEntries.reduce<string>((latest, entry) => {
       const ts = entry.updatedAt || entry.createdAt || '';
       if (!ts) return latest;
       if (!latest) return ts;
       return ts > latest ? ts : latest;
     }, '');
-
     const lastAudit = lastTs
       ? new Date(lastTs).toLocaleString('pt-BR', {
           day: '2-digit', month: '2-digit', year: 'numeric',
           hour: '2-digit', minute: '2-digit'
         })
       : '-';
-
     return {
-      totalOrcado,
-      totalExecutado,
+      totalOrcado, totalExecutado,
       totalSaldo: totalOrcado - totalExecutado,
       percentTotal: totalOrcado > 0 ? (totalExecutado / totalOrcado) * 100 : 0,
-      criticalItems,
-      lastAudit,
+      criticalItems, lastAudit,
     };
   }, [ledgerEntries]);
 
@@ -204,9 +189,8 @@ export function App() {
       }
     });
     const categories = [...new Set(BUDGET_DATA.map(i => i.type))];
-    const groups = [...new Set(BUDGET_DATA.map(i => i.group))];
-    const stages = [...new Set(BUDGET_DATA.map(i => i.stage))];
-
+    const groups    = [...new Set(BUDGET_DATA.map(i => i.group))];
+    const stages    = [...new Set(BUDGET_DATA.map(i => i.stage))];
     return {
       category: {
         labels: categories,
@@ -242,6 +226,8 @@ export function App() {
   return (
     <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
+
+        {/* ── Barra superior ── */}
         <div className="flex justify-end mb-4 gap-4 items-center">
           <div className="flex items-center gap-2 text-slate-500 bg-white px-3 py-1 rounded-full border text-xs font-bold">
             <UserIcon size={12} /> {user?.email || 'Modo Visualização'}
@@ -256,6 +242,7 @@ export function App() {
 
         <Header onExportCSV={handleExportCSV} />
 
+        {/* ── Tabs ── */}
         <div className="mb-8 flex gap-3">
           <button
             onClick={() => setActiveTab('entry')}
@@ -269,20 +256,23 @@ export function App() {
           >
             Ambiente do Relatório
           </button>
-
-           <button 
+          <button
             onClick={() => setActiveTab('relatorio')}
-            className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'relatorio' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}>
+            className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'relatorio' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}
+          >
             Relatório Final
-            </button>
-          
+          </button>
         </div>
 
-        {activeTab === 'entry' ? (
+        {/* ── Aba: Incluir Registros ── */}
+        {activeTab === 'entry' && (
           <div className="max-w-4xl mx-auto">
             <ExpenseForm onAdd={handleAddEntry} showToast={showToast} />
           </div>
-        ) : (
+        )}
+
+        {/* ── Aba: Ambiente do Relatório ── */}
+        {activeTab === 'report' && (
           <div className="space-y-10">
             <SummaryCards
               totalOrcado={totals.totalOrcado}
@@ -315,6 +305,12 @@ export function App() {
             </div>
           </div>
         )}
+
+        {/* ── Aba: Relatório Final ── */}
+        {activeTab === 'relatorio' && (
+          <RelatorioFinal onBack={() => setActiveTab('entry')} />
+        )}
+
       </div>
 
       {editingEntry && (
