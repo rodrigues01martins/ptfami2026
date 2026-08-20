@@ -49,7 +49,7 @@ const STEPS = [
 ];
 
 const initialState = {
-  ident: { periodoIni: "", periodoFim: "", responsavel: "" },
+  ident: { periodoIni: "2026-03-17", periodoFim: "2026-09-16", responsavel: "" },
   resumo: { texto: "" },
   execucao: {
     implantacao: "",
@@ -195,10 +195,8 @@ const SecIdent = ({ s, set }: { s: AppState; set: (fn: (p: AppState) => AppState
     </Card>
     <Card title="A preencher">
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Período de execução — início" type="date" value={s.ident.periodoIni}
-          onChange={v => set(p => ({ ...p, ident: { ...p.ident, periodoIni: v } }))} />
-        <Field label="Período de execução — fim" type="date" value={s.ident.periodoFim}
-          onChange={v => set(p => ({ ...p, ident: { ...p.ident, periodoFim: v } }))} />
+        <Field label="Período de execução — início" type="date" value={s.ident.periodoIni} locked />
+        <Field label="Período de execução — fim" type="date" value={s.ident.periodoFim} locked />
       </div>
       <Field label="Responsável pelo relatório" hint="nome, cargo, telefone e e-mail institucional"
         value={s.ident.responsavel}
