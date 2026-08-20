@@ -16,6 +16,7 @@ import { LedgerEntry } from './types';
 import { User as UserIcon } from 'lucide-react';
 import RelatorioFinal from './components/RelatorioFinal';
 
+
 export function App() {
   const [user, setUser] = useState<User | null>(null);
   const [isDemoMode, setIsDemoMode] = useState(false);
@@ -25,6 +26,7 @@ export function App() {
   const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>([]);
   const [toast, setToast] = useState({ message: '', isVisible: false });
   const [editingEntry, setEditingEntry] = useState<LedgerEntry | null>(null);
+  const [activeTab, setActiveTab] = useState<'entry' | 'report' | 'relatorio'>('entry');
 
   const ADMIN_UIDS = ["lba3ydI19fPRDIXF09zXFI7oV8x2", "DfGvSS1g2oPlbLf5y0zazf9LYSx2", "zTGXyZqsYghjUSfg0ptoEFKiCCc2"];
   const isAdmin = user ? ADMIN_UIDS.includes(user.uid) : false;
@@ -267,6 +269,13 @@ export function App() {
           >
             Ambiente do Relatório
           </button>
+
+           <button 
+            onClick={() => setActiveTab('relatorio')}
+            className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'relatorio' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}>
+            Relatório Final
+            </button>
+          
         </div>
 
         {activeTab === 'entry' ? (
