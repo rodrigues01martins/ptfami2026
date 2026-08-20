@@ -254,7 +254,7 @@ export function App() {
             onClick={() => setActiveTab('report')}
             className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'report' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}
           >
-            Ambiente do Relatório
+            Visão Geral
           </button>
           <button
             onClick={() => setActiveTab('relatorio')}
