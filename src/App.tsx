@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
-import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, orderBy, getDoc } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, orderBy, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
 import { Header } from './components/Header';
 import { SummaryCards } from './components/SummaryCards';
@@ -15,13 +15,14 @@ import { BUDGET_DATA } from './constants';
 import { LedgerEntry } from './types';
 import { User as UserIcon } from 'lucide-react';
 import RelatorioFinal from './components/RelatorioFinal';
+import { UserManagement } from './components/UserManagement';
 
 export function App() {
   const [user, setUser] = useState<User | null>(null);
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [isAuthReady, setIsAuthReady] = useState(false);
   // ── activeTab com as 3 abas (declarado UMA única vez) ──
-  const [activeTab, setActiveTab] = useState<'entry' | 'report' | 'relatorio'>('entry');
+  const [activeTab, setActiveTab] = useState<'entry' | 'report' | 'relatorio' | 'gestao'>('entry');
   const [filterStatus, setFilterStatus] = useState<LedgerEntry['approvalStatus'] | 'Todos'>('Todos');
   const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>([]);
   const [toast, setToast] = useState({ message: '', isVisible: false });
@@ -42,9 +43,24 @@ export function App() {
   }, [user, isAdmin]);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       setIsAuthReady(true);
+      // Auto-cria documento em /users/{uid} se não existir
+      if (currentUser) {
+        const userRef = doc(db, 'users', currentUser.uid);
+        const snap = await getDoc(userRef);
+        if (!snap.exists()) {
+          await setDoc(userRef, {
+            uid: currentUser.uid,
+            email: currentUser.email || '',
+            displayName: currentUser.displayName || '',
+            role: 'user',
+            canAccessRelatorio: false,
+            createdAt: new Date().toISOString(),
+          });
+        }
+      }
     });
     return () => unsubscribe();
   }, []);
@@ -267,6 +283,16 @@ export function App() {
           >
             Ambiente do Relatório
           </button>
+          {/* Aba Gestão de Usuários — visível apenas para admins */}
+          {isAdmin && (
+            <button
+              onClick={() => setActiveTab('gestao')}
+              className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'gestao' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}
+            >
+              Gestão de Usuários
+            </button>
+          )}
+
           {/* Aba Relatório Final — visível apenas para admins ou usuários autorizados */}
           {canAccessRelatorio && (
             <button
@@ -316,6 +342,11 @@ export function App() {
               <BudgetStatus entries={ledgerEntries} />
             </div>
           </div>
+        )}
+
+        {/* ── Aba: Gestão de Usuários — acesso restrito a admins ── */}
+        {activeTab === 'gestao' && isAdmin && (
+          <UserManagement currentUserUid={user?.uid || ''} />
         )}
 
         {/* ── Aba: Relatório Final — acesso restrito a admins ou usuários autorizados ── */}
