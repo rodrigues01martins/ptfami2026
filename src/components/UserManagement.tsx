@@ -14,9 +14,10 @@ interface UserRecord {
 
 interface UserManagementProps {
   currentUserUid: string;
+  adminUids: string[];
 }
 
-export const UserManagement: React.FC<UserManagementProps> = ({ currentUserUid }) => {
+export const UserManagement: React.FC<UserManagementProps> = ({ currentUserUid, adminUids }) => {
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -29,8 +30,9 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserUid }
         uid: d.id,
         email: d.data().email || '',
         displayName: d.data().displayName || '',
-        role: d.data().role || 'user',
-        canAccessRelatorio: d.data().canAccessRelatorio === true,
+        // Admin é definido pelo UID hardcoded, não pelo campo role
+        role: adminUids.includes(d.id) ? 'admin' : (d.data().role || 'user'),
+        canAccessRelatorio: d.data().canAccessRelatorio === true || adminUids.includes(d.id),
         createdAt: d.data().createdAt || '',
       }));
       setUsers(data);
