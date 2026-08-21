@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
-import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, orderBy, getDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
 import { Header } from './components/Header';
 import { SummaryCards } from './components/SummaryCards';
@@ -26,9 +26,20 @@ export function App() {
   const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>([]);
   const [toast, setToast] = useState({ message: '', isVisible: false });
   const [editingEntry, setEditingEntry] = useState<LedgerEntry | null>(null);
+  const [canAccessRelatorio, setCanAccessRelatorio] = useState(false);
 
   const ADMIN_UIDS = ["lba3ydI19fPRDIXF09zXFI7oV8x2", "DfGvSS1g2oPlbLf5y0zazf9LYSx2", "zTGXyZqsYghjUSfg0ptoEFKiCCc2"];
   const isAdmin = user ? ADMIN_UIDS.includes(user.uid) : false;
+
+  // Lê permissão canAccessRelatorio do Firestore para o usuário logado
+  useEffect(() => {
+    if (!user) { setCanAccessRelatorio(false); return; }
+    if (isAdmin) { setCanAccessRelatorio(true); return; }
+    const userDocRef = doc(db, 'users', user.uid);
+    getDoc(userDocRef).then(snap => {
+      setCanAccessRelatorio(snap.exists() && snap.data()?.canAccessRelatorio === true);
+    }).catch(() => setCanAccessRelatorio(false));
+  }, [user, isAdmin]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -256,8 +267,8 @@ export function App() {
           >
             Ambiente do Relatório
           </button>
-          {/* Aba Relatório Final — visível apenas para admins */}
-          {isAdmin && (
+          {/* Aba Relatório Final — visível apenas para admins ou usuários autorizados */}
+          {canAccessRelatorio && (
             <button
               onClick={() => setActiveTab('relatorio')}
               className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'relatorio' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}
@@ -307,11 +318,11 @@ export function App() {
           </div>
         )}
 
-        {/* ── Aba: Relatório Final — acesso restrito a admins ── */}
-        {activeTab === 'relatorio' && isAdmin && (
+        {/* ── Aba: Relatório Final — acesso restrito a admins ou usuários autorizados ── */}
+        {activeTab === 'relatorio' && canAccessRelatorio && (
           <RelatorioFinal onBack={() => setActiveTab('entry')} />
         )}
-        {activeTab === 'relatorio' && !isAdmin && (
+        {activeTab === 'relatorio' && !canAccessRelatorio && (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mb-4">
               <span className="text-3xl">🔒</span>
