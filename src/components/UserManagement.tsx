@@ -53,19 +53,21 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserUid, 
       if (snap.exists()) {
         await updateDoc(ref, { canAccessRelatorio: !current });
       } else {
-        // Cria o documento se não existir
-        const user = users.find(u => u.uid === uid);
+        // Documento não existe — admin cria para o usuário
+        const u = users.find(u => u.uid === uid);
         await setDoc(ref, {
           uid,
-          email: user?.email || '',
+          email: u?.email || '',
+          displayName: u?.displayName || '',
           role: 'user',
           canAccessRelatorio: !current,
           createdAt: new Date().toISOString(),
         });
       }
       showToast(`Acesso ao Relatório Final ${!current ? 'liberado' : 'revogado'} com sucesso.`);
-    } catch (e) {
-      showToast('Erro ao atualizar permissão.');
+    } catch (e: any) {
+      console.error('Erro ao atualizar permissão:', e?.code, e?.message);
+      showToast(`Erro ao atualizar permissão: ${e?.code || 'verifique as regras do Firestore'}`);
     }
   };
 
