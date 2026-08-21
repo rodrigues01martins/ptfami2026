@@ -346,7 +346,7 @@ export function App() {
 
         {/* ── Aba: Gestão de Usuários — acesso restrito a admins ── */}
         {activeTab === 'gestao' && isAdmin && (
-          <UserManagement currentUserUid={user?.uid || ''} />
+          <UserManagement currentUserUid={user?.uid || ''} adminUids={ADMIN_UIDS} />
         )}
 
         {/* ── Aba: Relatório Final — acesso restrito a admins ou usuários autorizados ── */}
