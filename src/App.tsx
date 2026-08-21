@@ -28,18 +28,37 @@ export function App() {
   const [toast, setToast] = useState({ message: '', isVisible: false });
   const [editingEntry, setEditingEntry] = useState<LedgerEntry | null>(null);
   const [canAccessRelatorio, setCanAccessRelatorio] = useState(false);
+  const [canAccessEntry, setCanAccessEntry] = useState(false);
+  const [canAccessReport, setCanAccessReport] = useState(false);
 
   const ADMIN_UIDS = ["lba3ydI19fPRDIXF09zXFI7oV8x2", "DfGvSS1g2oPlbLf5y0zazf9LYSx2", "zTGXyZqsYghjUSfg0ptoEFKiCCc2"];
   const isAdmin = user ? ADMIN_UIDS.includes(user.uid) : false;
 
-  // Lê permissão canAccessRelatorio do Firestore para o usuário logado
+  // Lê permissões do Firestore para o usuário logado
   useEffect(() => {
-    if (!user) { setCanAccessRelatorio(false); return; }
-    if (isAdmin) { setCanAccessRelatorio(true); return; }
+    if (!user) {
+      setCanAccessRelatorio(false);
+      setCanAccessEntry(false);
+      setCanAccessReport(false);
+      return;
+    }
+    if (isAdmin) {
+      setCanAccessRelatorio(true);
+      setCanAccessEntry(true);
+      setCanAccessReport(true);
+      return;
+    }
     const userDocRef = doc(db, 'users', user.uid);
     getDoc(userDocRef).then(snap => {
-      setCanAccessRelatorio(snap.exists() && snap.data()?.canAccessRelatorio === true);
-    }).catch(() => setCanAccessRelatorio(false));
+      const data = snap.data();
+      setCanAccessRelatorio(snap.exists() && data?.canAccessRelatorio === true);
+      setCanAccessEntry(snap.exists() && data?.canAccessEntry === true);
+      setCanAccessReport(snap.exists() && data?.canAccessReport === true);
+    }).catch(() => {
+      setCanAccessRelatorio(false);
+      setCanAccessEntry(false);
+      setCanAccessReport(false);
+    });
   }, [user, isAdmin]);
 
   useEffect(() => {
@@ -57,6 +76,8 @@ export function App() {
             displayName: currentUser.displayName || '',
             role: 'user',
             canAccessRelatorio: false,
+            canAccessEntry: false,
+            canAccessReport: false,
             createdAt: new Date().toISOString(),
           });
         }
@@ -241,6 +262,19 @@ export function App() {
     };
   }, [ledgerEntries]);
 
+  // Redireciona para a primeira aba disponível após carregar permissões
+  useEffect(() => {
+    if (!isAuthReady) return;
+    if (activeTab === 'entry' && !isAdmin && !canAccessEntry) {
+      if (canAccessReport) setActiveTab('report');
+      else if (canAccessRelatorio) setActiveTab('relatorio');
+    }
+    if (activeTab === 'report' && !isAdmin && !canAccessReport) {
+      if (canAccessEntry) setActiveTab('entry');
+      else if (canAccessRelatorio) setActiveTab('relatorio');
+    }
+  }, [isAuthReady, canAccessEntry, canAccessReport, canAccessRelatorio, isAdmin]);
+
   if (!isAuthReady) return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 font-bold text-[#00735C]">
       Iniciando SEDS...
@@ -271,18 +305,22 @@ export function App() {
 
         {/* ── Tabs ── */}
         <div className="mb-8 flex gap-3">
-          <button
-            onClick={() => setActiveTab('entry')}
-            className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'entry' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}
-          >
-            Incluir Registros
-          </button>
-          <button
-            onClick={() => setActiveTab('report')}
-            className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'report' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}
-          >
-            Ambiente do Relatório
-          </button>
+          {(isAdmin || canAccessEntry) && (
+            <button
+              onClick={() => setActiveTab('entry')}
+              className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'entry' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}
+            >
+              Incluir Registros
+            </button>
+          )}
+          {(isAdmin || canAccessReport) && (
+            <button
+              onClick={() => setActiveTab('report')}
+              className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'report' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}
+            >
+              Ambiente do Relatório
+            </button>
+          )}
           {/* Aba Gestão de Usuários — visível apenas para admins */}
           {isAdmin && (
             <button
@@ -305,12 +343,12 @@ export function App() {
         </div>
 
         {/* ── Aba: Incluir Registros ── */}
-        {activeTab === 'entry' && (
+        {activeTab === 'entry' && (isAdmin || canAccessEntry) && (
           <ExpenseForm onAdd={handleAddEntry} showToast={showToast} />
         )}
 
         {/* ── Aba: Ambiente do Relatório ── */}
-        {activeTab === 'report' && (
+        {activeTab === 'report' && (isAdmin || canAccessReport) && (
           <div className="space-y-10">
             <SummaryCards
               totalOrcado={totals.totalOrcado}
