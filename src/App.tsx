@@ -14,7 +14,6 @@ import { Login } from './components/Login';
 import { BUDGET_DATA } from './constants';
 import { LedgerEntry, Remanejamento } from './types';
 import { getPrevisto } from './lib/utils';
-import { User as UserIcon } from 'lucide-react';
 import RelatorioFinal from './components/RelatorioFinal';
 import { UserManagement } from './components/UserManagement';
 
@@ -335,22 +334,11 @@ export function App() {
         onExportCSV={handleExportCSV}
         showGestao={isAdmin}
         onGestaoClick={() => setActiveTab('gestao')}
+        userEmail={user?.email || 'Modo Visualização'}
+        onSignOut={() => signOut(auth)}
       />
       <div className="p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-
-        {/* ── Barra superior ── */}
-        <div className="flex justify-end mb-4 gap-4 items-center">
-          <div className="flex items-center gap-2 text-slate-500 bg-white px-3 py-1 rounded-full border text-xs font-bold">
-            <UserIcon size={12} /> {user?.email || 'Modo Visualização'}
-          </div>
-          <button
-            onClick={() => signOut(auth)}
-            className="text-red-600 text-xs font-bold hover:bg-red-50 p-1 px-3 rounded-full transition-all"
-          >
-            Sair
-          </button>
-        </div>
 
         {/* ── Tabs ── */}
         <div className="mb-8 flex gap-3">
