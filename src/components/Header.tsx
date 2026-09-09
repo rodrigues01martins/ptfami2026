@@ -18,7 +18,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* ── Marcas ── */}
         <div className="flex items-center gap-4 shrink-0">
-          <img src="/logo-seds.png" alt="SEDS · Governo de Goiás" className="h-10 w-auto object-contain" />
+          <img src="/logo-seds-goias.png" alt="SEDS · Governo de Goiás" className="h-10 w-auto object-contain" />
         </div>
 
         {/* ── Ações ── */}
