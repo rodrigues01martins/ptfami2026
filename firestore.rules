@@ -15,11 +15,17 @@ service cloud.firestore {
          (request.auth.token.email == "rodrigues01martins@gmail.com" &&
           request.auth.token.email_verified == true));
     }
+    // Controle de Saldos tinha o acesso coberto pelo campo antigo canAccessReport;
+    // usuários que nunca tiveram canAccessSaldos gravado mantêm o acesso legado.
+    function hasSaldosAccess(userData) {
+      return userData.canAccessSaldos == true ||
+        (!('canAccessSaldos' in userData) && userData.canAccessReport == true);
+    }
     function canManageRemanejamento() {
       return isAdmin() ||
         (isAuthenticated() &&
          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.canAccessReport == true);
+         hasSaldosAccess(get(/databases/$(database)/documents/users/$(request.auth.uid)).data));
     }
 
     // ── Usuários ─────────────────────────────────────────────

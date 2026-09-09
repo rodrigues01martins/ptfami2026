@@ -23,6 +23,23 @@ export function getPrevisto(itemId: string, remanejamentos: Remanejamento[] = []
 
 export const fmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
+// Resolve uma permissão booleana a partir do documento do usuário no Firestore.
+// - Se o campo estiver definido (true/false), esse valor explícito sempre vence.
+// - Se o campo nunca foi gravado (undefined), cai no legacyField (campo antigo que
+//   cobria várias páginas de uma vez) ou no defaultWhenUnset, para não revogar
+//   silenciosamente o acesso de usuários já cadastrados antes de um campo existir.
+export function resolvePermission(
+  data: Record<string, any> | undefined,
+  field: string,
+  options: { legacyField?: string; defaultWhenUnset?: boolean } = {},
+): boolean {
+  const value = data?.[field];
+  if (value === true) return true;
+  if (value === false) return false;
+  if (options.legacyField) return data?.[options.legacyField] === true;
+  return options.defaultWhenUnset ?? false;
+}
+
 export function normalizeDateInput(value: string): string {
   const str = String(value || '').trim();
   if (!str) return new Date().toLocaleDateString('pt-BR');

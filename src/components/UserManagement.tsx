@@ -2,15 +2,27 @@ import React, { useState, useEffect } from 'react';
 import { collection, doc, getDoc, setDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Users, Shield, ShieldOff, FileText, RefreshCw, Search } from 'lucide-react';
+import { resolvePermission } from '../lib/utils';
+
+type PermissionField =
+  | 'canAccessEntry'
+  | 'canAccessDespesas'
+  | 'canAccessSaldos'
+  | 'canAccessPainel'
+  | 'canAccessRelatorio'
+  | 'canExportCSV';
 
 interface UserRecord {
   uid: string;
   email: string;
   displayName?: string;
   role: string;
-  canAccessRelatorio: boolean;
   canAccessEntry: boolean;
-  canAccessReport: boolean;
+  canAccessDespesas: boolean;
+  canAccessSaldos: boolean;
+  canAccessPainel: boolean;
+  canAccessRelatorio: boolean;
+  canExportCSV: boolean;
   createdAt?: string;
 }
 
@@ -28,17 +40,29 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserUid, 
   // Escuta em tempo real a coleção users
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'users'), snap => {
-      const data = snap.docs.map(d => ({
-        uid: d.id,
-        email: d.data().email || '',
-        displayName: d.data().displayName || '',
-        // Admin é definido pelo UID hardcoded, não pelo campo role
-        role: adminUids.includes(d.id) ? 'admin' : (d.data().role || 'user'),
-        canAccessRelatorio: d.data().canAccessRelatorio === true || adminUids.includes(d.id),
-        canAccessEntry: d.data().canAccessEntry === true || adminUids.includes(d.id),
-        canAccessReport: d.data().canAccessReport === true || adminUids.includes(d.id),
-        createdAt: d.data().createdAt || '',
-      }));
+      const data = snap.docs.map(d => {
+        const raw = d.data();
+        const isAdmin = adminUids.includes(d.id);
+        return {
+          uid: d.id,
+          email: raw.email || '',
+          displayName: raw.displayName || '',
+          // Admin é definido pelo UID hardcoded, não pelo campo role
+          role: isAdmin ? 'admin' : (raw.role || 'user'),
+          canAccessEntry: isAdmin || resolvePermission(raw, 'canAccessEntry'),
+          // Despesas/Saldos/Painel eram cobertos por um único campo antigo
+          // (canAccessReport); mantém acesso quem já tinha e nunca teve o
+          // campo novo gravado.
+          canAccessDespesas: isAdmin || resolvePermission(raw, 'canAccessDespesas', { legacyField: 'canAccessReport' }),
+          canAccessSaldos: isAdmin || resolvePermission(raw, 'canAccessSaldos', { legacyField: 'canAccessReport' }),
+          canAccessPainel: isAdmin || resolvePermission(raw, 'canAccessPainel', { legacyField: 'canAccessReport' }),
+          canAccessRelatorio: isAdmin || resolvePermission(raw, 'canAccessRelatorio'),
+          // Exportar CSV nunca teve controle de acesso antes; fica liberado por
+          // padrão até um admin revogar explicitamente.
+          canExportCSV: isAdmin || resolvePermission(raw, 'canExportCSV', { defaultWhenUnset: true }),
+          createdAt: raw.createdAt || '',
+        };
+      });
       setUsers(data);
       setLoading(false);
     }, () => setLoading(false));
@@ -50,7 +74,26 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserUid, 
     setTimeout(() => setToast(''), 3000);
   };
 
-  const togglePermission = async (uid: string, field: 'canAccessRelatorio' | 'canAccessEntry' | 'canAccessReport', current: boolean) => {
+  const PERMISSION_LABELS: Record<PermissionField, string> = {
+    canAccessEntry: 'Incluir Registros',
+    canAccessDespesas: 'Registro de Despesas',
+    canAccessSaldos: 'Controle de Saldos',
+    canAccessPainel: 'Painel',
+    canAccessRelatorio: 'Relatório Final',
+    canExportCSV: 'Exportar Registros (CSV)',
+  };
+
+  // Uma coluna de toggle por página/funcionalidade do app, nesta ordem.
+  const PERMISSION_COLUMNS: { field: PermissionField; header: string }[] = [
+    { field: 'canAccessEntry', header: 'Incluir Registros' },
+    { field: 'canAccessDespesas', header: 'Despesas' },
+    { field: 'canAccessSaldos', header: 'Saldos' },
+    { field: 'canAccessPainel', header: 'Painel' },
+    { field: 'canAccessRelatorio', header: 'Relatório Final' },
+    { field: 'canExportCSV', header: 'Exportar CSV' },
+  ];
+
+  const togglePermission = async (uid: string, field: PermissionField, current: boolean) => {
     try {
       const ref = doc(db, 'users', uid);
       const snap = await getDoc(ref);
@@ -63,19 +106,17 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserUid, 
           email: u?.email || '',
           displayName: u?.displayName || '',
           role: 'user',
-          canAccessRelatorio: false,
           canAccessEntry: false,
-          canAccessReport: false,
+          canAccessDespesas: false,
+          canAccessSaldos: false,
+          canAccessPainel: false,
+          canAccessRelatorio: false,
+          canExportCSV: false,
           [field]: !current,
           createdAt: new Date().toISOString(),
         });
       }
-      const labels: Record<string, string> = {
-        canAccessRelatorio: 'Relatório Final',
-        canAccessEntry: 'Incluir Registros',
-        canAccessReport: 'Ambiente do Relatório',
-      };
-      showToast(`Acesso a "${labels[field]}" ${!current ? 'liberado' : 'revogado'} com sucesso.`);
+      showToast(`Acesso a "${PERMISSION_LABELS[field]}" ${!current ? 'liberado' : 'revogado'} com sucesso.`);
     } catch (e: any) {
       console.error('Erro ao atualizar permissão:', e?.code, e?.message);
       showToast(`Erro: ${e?.code || 'verifique as regras do Firestore'}`);
@@ -154,33 +195,25 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserUid, 
                 <th className="text-left text-xs font-bold text-slate-500 uppercase p-4">Usuário</th>
                 <th className="text-left text-xs font-bold text-slate-500 uppercase p-4">UID</th>
                 <th className="text-center text-xs font-bold text-slate-500 uppercase p-4">Função</th>
-                <th className="text-center text-xs font-bold text-slate-500 uppercase p-4 whitespace-nowrap">
-                  <div className="flex items-center justify-center gap-1">
-                    <FileText size={11} /> Incluir Registros
-                  </div>
-                </th>
-              <th className="text-center text-xs font-bold text-slate-500 uppercase p-4 whitespace-nowrap">
-                  <div className="flex items-center justify-center gap-1">
-                    <FileText size={11} /> Amb. Relatório
-                  </div>
-                </th>
-              <th className="text-center text-xs font-bold text-slate-500 uppercase p-4 whitespace-nowrap">
-                  <div className="flex items-center justify-center gap-1">
-                    <FileText size={11} /> Relatório Final
-                  </div>
-                </th>
+                {PERMISSION_COLUMNS.map(({ field, header }) => (
+                  <th key={field} className="text-center text-xs font-bold text-slate-500 uppercase p-3 whitespace-nowrap">
+                    <div className="flex items-center justify-center gap-1">
+                      <FileText size={11} /> {header}
+                    </div>
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-slate-400 text-sm">
+                  <td colSpan={3 + PERMISSION_COLUMNS.length} className="p-8 text-center text-slate-400 text-sm">
                     Carregando usuários...
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="p-8 text-center text-slate-400 text-sm">
+                  <td colSpan={3 + PERMISSION_COLUMNS.length} className="p-8 text-center text-slate-400 text-sm">
                     {users.length === 0
                       ? 'Nenhum usuário encontrado. Os documentos são criados automaticamente no primeiro login de cada usuário.'
                       : 'Nenhum usuário encontrado para a busca.'}
@@ -231,56 +264,27 @@ export const UserManagement: React.FC<UserManagementProps> = ({ currentUserUid, 
                       </button>
                     </td>
 
-                    {/* Toggle Incluir Registros */}
-                    <td className="p-4 text-center">
-                      {u.role === 'admin' ? (
-                        <span className="text-xs text-slate-400 italic">auto</span>
-                      ) : (
-                        <button
-                          onClick={() => togglePermission(u.uid, 'canAccessEntry', u.canAccessEntry)}
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none
-                            ${u.canAccessEntry ? 'bg-[#00735C]' : 'bg-slate-200'}`}
-                          title={u.canAccessEntry ? 'Revogar acesso a Incluir Registros' : 'Liberar acesso a Incluir Registros'}
-                        >
-                          <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform
-                            ${u.canAccessEntry ? 'translate-x-6' : 'translate-x-1'}`} />
-                        </button>
-                      )}
-                    </td>
-
-                    {/* Toggle Ambiente do Relatório */}
-                    <td className="p-4 text-center">
-                      {u.role === 'admin' ? (
-                        <span className="text-xs text-slate-400 italic">auto</span>
-                      ) : (
-                        <button
-                          onClick={() => togglePermission(u.uid, 'canAccessReport', u.canAccessReport)}
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none
-                            ${u.canAccessReport ? 'bg-[#00735C]' : 'bg-slate-200'}`}
-                          title={u.canAccessReport ? 'Revogar acesso a Ambiente do Relatório' : 'Liberar acesso a Ambiente do Relatório'}
-                        >
-                          <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform
-                            ${u.canAccessReport ? 'translate-x-6' : 'translate-x-1'}`} />
-                        </button>
-                      )}
-                    </td>
-
-                    {/* Toggle Relatório Final */}
-                    <td className="p-4 text-center">
-                      {u.role === 'admin' ? (
-                        <span className="text-xs text-slate-400 italic">auto</span>
-                      ) : (
-                        <button
-                          onClick={() => togglePermission(u.uid, 'canAccessRelatorio', u.canAccessRelatorio)}
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none
-                            ${u.canAccessRelatorio ? 'bg-[#00735C]' : 'bg-slate-200'}`}
-                          title={u.canAccessRelatorio ? 'Revogar acesso a Relatório Final' : 'Liberar acesso a Relatório Final'}
-                        >
-                          <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform
-                            ${u.canAccessRelatorio ? 'translate-x-6' : 'translate-x-1'}`} />
-                        </button>
-                      )}
-                    </td>
+                    {/* Toggles de acesso — um por página/funcionalidade */}
+                    {PERMISSION_COLUMNS.map(({ field }) => {
+                      const current = u[field];
+                      return (
+                        <td key={field} className="p-3 text-center">
+                          {u.role === 'admin' ? (
+                            <span className="text-xs text-slate-400 italic">auto</span>
+                          ) : (
+                            <button
+                              onClick={() => togglePermission(u.uid, field, current)}
+                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none
+                                ${current ? 'bg-[#00735C]' : 'bg-slate-200'}`}
+                              title={current ? `Revogar acesso a ${PERMISSION_LABELS[field]}` : `Liberar acesso a ${PERMISSION_LABELS[field]}`}
+                            >
+                              <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform
+                                ${current ? 'translate-x-6' : 'translate-x-1'}`} />
+                            </button>
+                          )}
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))
               )}

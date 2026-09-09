@@ -13,7 +13,7 @@ import { Toast } from './components/Toast';
 import { Login } from './components/Login';
 import { BUDGET_DATA } from './constants';
 import { LedgerEntry, Remanejamento } from './types';
-import { getPrevisto } from './lib/utils';
+import { getPrevisto, resolvePermission } from './lib/utils';
 import RelatorioFinal from './components/RelatorioFinal';
 import { UserManagement } from './components/UserManagement';
 
@@ -30,7 +30,10 @@ export function App() {
   const [editingEntry, setEditingEntry] = useState<LedgerEntry | null>(null);
   const [canAccessRelatorio, setCanAccessRelatorio] = useState(false);
   const [canAccessEntry, setCanAccessEntry] = useState(false);
-  const [canAccessReport, setCanAccessReport] = useState(false);
+  const [canAccessDespesas, setCanAccessDespesas] = useState(false);
+  const [canAccessSaldos, setCanAccessSaldos] = useState(false);
+  const [canAccessPainel, setCanAccessPainel] = useState(false);
+  const [canExportCSV, setCanExportCSV] = useState(false);
 
   const ADMIN_UIDS = ["lba3ydI19fPRDIXF09zXFI7oV8x2", "DfGvSS1g2oPlbLf5y0zazf9LYSx2", "zTGXyZqsYghjUSfg0ptoEFKiCCc2"];
   const isAdmin = user ? ADMIN_UIDS.includes(user.uid) : false;
@@ -40,25 +43,42 @@ export function App() {
     if (!user) {
       setCanAccessRelatorio(false);
       setCanAccessEntry(false);
-      setCanAccessReport(false);
+      setCanAccessDespesas(false);
+      setCanAccessSaldos(false);
+      setCanAccessPainel(false);
+      setCanExportCSV(false);
       return;
     }
     if (isAdmin) {
       setCanAccessRelatorio(true);
       setCanAccessEntry(true);
-      setCanAccessReport(true);
+      setCanAccessDespesas(true);
+      setCanAccessSaldos(true);
+      setCanAccessPainel(true);
+      setCanExportCSV(true);
       return;
     }
     const userDocRef = doc(db, 'users', user.uid);
     getDoc(userDocRef).then(snap => {
-      const data = snap.data();
-      setCanAccessRelatorio(snap.exists() && data?.canAccessRelatorio === true);
-      setCanAccessEntry(snap.exists() && data?.canAccessEntry === true);
-      setCanAccessReport(snap.exists() && data?.canAccessReport === true);
+      const data = snap.exists() ? snap.data() : undefined;
+      setCanAccessRelatorio(resolvePermission(data, 'canAccessRelatorio'));
+      setCanAccessEntry(resolvePermission(data, 'canAccessEntry'));
+      // Registro de Despesas, Controle de Saldos e Painel eram cobertos por um
+      // único campo antigo (canAccessReport); usuários já cadastrados que nunca
+      // tiveram o campo novo gravado mantêm o acesso que já tinham.
+      setCanAccessDespesas(resolvePermission(data, 'canAccessDespesas', { legacyField: 'canAccessReport' }));
+      setCanAccessSaldos(resolvePermission(data, 'canAccessSaldos', { legacyField: 'canAccessReport' }));
+      setCanAccessPainel(resolvePermission(data, 'canAccessPainel', { legacyField: 'canAccessReport' }));
+      // Exportar CSV nunca teve controle de acesso antes; permanece liberado por
+      // padrão para quem já usava o app, até um admin revogar explicitamente.
+      setCanExportCSV(resolvePermission(data, 'canExportCSV', { defaultWhenUnset: true }));
     }).catch(() => {
       setCanAccessRelatorio(false);
       setCanAccessEntry(false);
-      setCanAccessReport(false);
+      setCanAccessDespesas(false);
+      setCanAccessSaldos(false);
+      setCanAccessPainel(false);
+      setCanExportCSV(false);
     });
   }, [user, isAdmin]);
 
@@ -78,7 +98,10 @@ export function App() {
             role: 'user',
             canAccessRelatorio: false,
             canAccessEntry: false,
-            canAccessReport: false,
+            canAccessDespesas: false,
+            canAccessSaldos: false,
+            canAccessPainel: false,
+            canExportCSV: false,
             createdAt: new Date().toISOString(),
           });
         }
@@ -198,7 +221,7 @@ export function App() {
   };
 
   const handleAddRemanejamento = async (itemOrigemId: string, itemDestinoId: string, valor: number) => {
-    if (!isAdmin && !canAccessReport) throw new Error('Acesso negado.');
+    if (!isAdmin && !canAccessSaldos) throw new Error('Acesso negado.');
     if (itemOrigemId === itemDestinoId) throw new Error('A rubrica de origem deve ser diferente da rubrica de destino.');
     if (!Number.isFinite(valor) || valor <= 0) throw new Error('Informe um valor válido, maior que zero.');
 
@@ -306,18 +329,23 @@ export function App() {
     };
   }, [ledgerEntries, remanejamentos]);
 
-  // Redireciona para a primeira aba disponível após carregar permissões
+  // Redireciona para a primeira aba disponível sempre que a aba atual não for
+  // acessível ao usuário (permissões carregadas, ou clique em uma aba sem acesso).
   useEffect(() => {
     if (!isAuthReady) return;
-    if (activeTab === 'entry' && !isAdmin && !canAccessEntry) {
-      if (canAccessReport) setActiveTab('report');
-      else if (canAccessRelatorio) setActiveTab('relatorio');
-    }
-    if (activeTab === 'report' && !isAdmin && !canAccessReport) {
-      if (canAccessEntry) setActiveTab('entry');
-      else if (canAccessRelatorio) setActiveTab('relatorio');
-    }
-  }, [isAuthReady, canAccessEntry, canAccessReport, canAccessRelatorio, isAdmin]);
+    const canAccessTab: Record<typeof activeTab, boolean> = {
+      entry: isAdmin || canAccessEntry,
+      despesas: isAdmin || canAccessDespesas,
+      saldos: isAdmin || canAccessSaldos,
+      report: isAdmin || canAccessPainel,
+      relatorio: canAccessRelatorio,
+      gestao: isAdmin,
+    };
+    if (canAccessTab[activeTab]) return;
+    const fallbackOrder: (typeof activeTab)[] = ['entry', 'despesas', 'saldos', 'report', 'relatorio'];
+    const next = fallbackOrder.find(tab => canAccessTab[tab]);
+    if (next) setActiveTab(next);
+  }, [isAuthReady, activeTab, isAdmin, canAccessEntry, canAccessDespesas, canAccessSaldos, canAccessPainel, canAccessRelatorio]);
 
   if (!isAuthReady) return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 font-bold text-[#00735C]">
@@ -332,6 +360,7 @@ export function App() {
     <div className="min-h-screen bg-[#f8fafc]">
       <Header
         onExportCSV={handleExportCSV}
+        showExportCSV={isAdmin || canExportCSV}
         showGestao={isAdmin}
         onGestaoClick={() => setActiveTab('gestao')}
         onHomeClick={() => setActiveTab('entry')}
@@ -350,7 +379,7 @@ export function App() {
               Incluir Registros
             </button>
           )}
-          {(isAdmin || canAccessReport) && (
+          {(isAdmin || canAccessDespesas) && (
             <button
               onClick={() => setActiveTab('despesas')}
               className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'despesas' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}
@@ -358,7 +387,7 @@ export function App() {
               Registro das Despesas
             </button>
           )}
-          {(isAdmin || canAccessReport) && (
+          {(isAdmin || canAccessSaldos) && (
             <button
               onClick={() => setActiveTab('saldos')}
               className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'saldos' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}
@@ -366,7 +395,7 @@ export function App() {
               Controle de Saldos
             </button>
           )}
-          {(isAdmin || canAccessReport) && (
+          {(isAdmin || canAccessPainel) && (
             <button
               onClick={() => setActiveTab('report')}
               className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'report' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}
@@ -391,7 +420,7 @@ export function App() {
         )}
 
         {/* ── Aba: Registro das Despesas ── */}
-        {activeTab === 'despesas' && (isAdmin || canAccessReport) && (
+        {activeTab === 'despesas' && (isAdmin || canAccessDespesas) && (
           <div className="space-y-10">
             <Ledger
               entries={ledgerEntries}
@@ -406,13 +435,13 @@ export function App() {
         )}
 
         {/* ── Aba: Análise do Plano de Trabalho (Saldos) ── */}
-        {activeTab === 'saldos' && (isAdmin || canAccessReport) && (
+        {activeTab === 'saldos' && (isAdmin || canAccessSaldos) && (
           <div className="space-y-10">
             <div className="w-full">
               <BudgetStatus
                 entries={ledgerEntries}
                 remanejamentos={remanejamentos}
-                canManageRemanejamento={isAdmin || canAccessReport}
+                canManageRemanejamento={isAdmin || canAccessSaldos}
                 onAddRemanejamento={handleAddRemanejamento}
               />
             </div>
@@ -420,7 +449,7 @@ export function App() {
         )}
 
         {/* ── Aba: Painel (Ambiente do Relatório) ── */}
-        {activeTab === 'report' && (isAdmin || canAccessReport) && (
+        {activeTab === 'report' && (isAdmin || canAccessPainel) && (
           <div className="space-y-10">
             <SummaryCards
               totalOrcado={totals.totalOrcado}

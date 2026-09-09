@@ -3,6 +3,7 @@ import { Home } from 'lucide-react';
 
 interface HeaderProps {
   onExportCSV: () => void;
+  showExportCSV: boolean;
   showGestao: boolean;
   onGestaoClick: () => void;
   onHomeClick: () => void;
@@ -10,7 +11,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  onExportCSV, showGestao, onGestaoClick, onHomeClick, onSignOut,
+  onExportCSV, showExportCSV, showGestao, onGestaoClick, onHomeClick, onSignOut,
 }) => {
   return (
     <header className="w-full bg-white border-b border-slate-200 sticky top-0 z-30">
@@ -30,12 +31,14 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Home size={20} />
           </button>
-          <button
-            onClick={onExportCSV}
-            className="text-sm font-semibold text-slate-700 hover:text-[#007770] transition-colors whitespace-nowrap"
-          >
-            Exportar Registros (CSV)
-          </button>
+          {showExportCSV && (
+            <button
+              onClick={onExportCSV}
+              className="text-sm font-semibold text-slate-700 hover:text-[#007770] transition-colors whitespace-nowrap"
+            >
+              Exportar Registros (CSV)
+            </button>
+          )}
           {showGestao && (
             <button
               onClick={onGestaoClick}
