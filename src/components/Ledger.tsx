@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { Eye, Edit, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Eye, Edit, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { LedgerEntry } from '../types';
 import { BUDGET_DATA } from '../constants';
 import { formatDateForSort } from '../lib/utils';
+
+const PAGE_SIZE = 50;
 
 interface LedgerProps {
   entries: LedgerEntry[];
@@ -26,6 +28,7 @@ export function Ledger({
   const [filterItemCode, setFilterItemCode] = useState('');
   const [sortMode, setSortMode] = useState('desc');
   const [filterStatus, setFilterStatus] = useState<string>('Todos');
+  const [page, setPage] = useState(1);
 
   const categories = [...new Set(BUDGET_DATA.map(i => i.type))];
 
@@ -42,6 +45,13 @@ export function Ledger({
       if (sortMode === 'amount_asc') return a.amount - b.amount;
       return formatDateForSort(b.date) - formatDateForSort(a.date);
     });
+
+  // Renderizar milhares de linhas de uma vez trava a interface por um instante
+  // (parece que o clique na aba "não pegou"). Pagina para manter a resposta rápida.
+  useEffect(() => { setPage(1); }, [filterCategory, filterItemCode, filterStatus, sortMode]);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const openDocument = (data: string) => {
     try {
@@ -167,7 +177,7 @@ export function Ledger({
                 </td>
               </tr>
             ) : (
-              filtered.map(entry => (
+              paginated.map(entry => (
                 <tr key={entry.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                   <td className="p-4 text-sm text-slate-600 whitespace-nowrap">{entry.date}</td>
                   <td className="p-4 whitespace-nowrap">
@@ -247,6 +257,31 @@ export function Ledger({
           </tbody>
         </table>
       </div>
+
+      {/* ── Paginação ── */}
+      {filtered.length > 0 && (
+        <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between gap-3 flex-wrap">
+          <span className="text-[11px] text-slate-400 font-semibold whitespace-nowrap">
+            Página {currentPage} de {totalPages}
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-600 hover:border-[#00735C] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-slate-200 transition-all"
+            >
+              <ChevronLeft size={14} /> Anterior
+            </button>
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-600 hover:border-[#00735C] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-slate-200 transition-all"
+            >
+              Próxima <ChevronRight size={14} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
