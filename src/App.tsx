@@ -86,6 +86,10 @@ export function App() {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       setIsAuthReady(true);
+      // A navegação é só estado em memória (não é cache do navegador) — como o
+      // app nunca desmonta, sem isso ele mantém a última aba visitada entre
+      // logout e login. Toda troca de sessão sempre volta para "Incluir Registros".
+      setActiveTab('entry');
       // Auto-cria documento em /users/{uid} se não existir
       if (currentUser) {
         const userRef = doc(db, 'users', currentUser.uid);
