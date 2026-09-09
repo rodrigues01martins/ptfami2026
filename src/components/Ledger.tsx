@@ -183,7 +183,7 @@ export function Ledger({
                   <td className="p-4 text-sm text-slate-600 italic truncate max-w-[150px]" title={entry.description}>
                     {entry.description || '-'}
                   </td>
-                  <td className="p-4 text-sm font-medium text-slate-700 whitespace-nowrap">
+                  <td className="p-4 text-sm font-medium text-slate-700 truncate max-w-[180px]" title={entry.supplier}>
                     {entry.supplier || '-'}
                   </td>
                   <td className="p-4 text-right font-bold text-slate-900 whitespace-nowrap">
