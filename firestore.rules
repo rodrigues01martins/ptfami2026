@@ -8,9 +8,21 @@ service cloud.firestore {
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
+    // Mesma lista de UIDs hardcoded em ADMIN_UIDS (src/App.tsx) — o app trata
+    // esses UIDs como admin no cliente, então a regra precisa reconhecer o
+    // mesmo, já que o campo role nunca é gravado como 'admin' automaticamente.
+    // Ao alterar ADMIN_UIDS em App.tsx, atualize esta lista também.
+    function isHardcodedAdmin() {
+      return request.auth.uid in [
+        'lba3ydI19fPRDIXF09zXFI7oV8x2',
+        'DfGvSS1g2oPlbLf5y0zazf9LYSx2',
+        'zTGXyZqsYghjUSfg0ptoEFKiCCc2'
+      ];
+    }
     function isAdmin() {
       return isAuthenticated() &&
-        ((exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        (isHardcodedAdmin() ||
+         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
          (request.auth.token.email == "rodrigues01martins@gmail.com" &&
           request.auth.token.email_verified == true));
