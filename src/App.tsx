@@ -22,7 +22,7 @@ export function App() {
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [isAuthReady, setIsAuthReady] = useState(false);
   // ── activeTab com as 3 abas (declarado UMA única vez) ──
-  const [activeTab, setActiveTab] = useState<'entry' | 'report' | 'relatorio' | 'gestao'>('entry');
+  const [activeTab, setActiveTab] = useState<'entry' | 'despesas' | 'saldos' | 'report' | 'relatorio' | 'gestao'>('entry');
   const [filterStatus, setFilterStatus] = useState<LedgerEntry['approvalStatus'] | 'Todos'>('Todos');
   const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>([]);
   const [toast, setToast] = useState({ message: '', isVisible: false });
@@ -315,10 +315,26 @@ export function App() {
           )}
           {(isAdmin || canAccessReport) && (
             <button
+              onClick={() => setActiveTab('despesas')}
+              className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'despesas' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}
+            >
+              Registro das Despesas
+            </button>
+          )}
+          {(isAdmin || canAccessReport) && (
+            <button
+              onClick={() => setActiveTab('saldos')}
+              className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'saldos' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}
+            >
+              Análise do Plano de Trabalho (Saldos)
+            </button>
+          )}
+          {(isAdmin || canAccessReport) && (
+            <button
               onClick={() => setActiveTab('report')}
               className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'report' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}
             >
-              Ambiente do Relatório
+              Painel
             </button>
           )}
           {/* Aba Gestão de Usuários — visível apenas para admins */}
@@ -347,7 +363,31 @@ export function App() {
           <ExpenseForm onAdd={handleAddEntry} showToast={showToast} />
         )}
 
-        {/* ── Aba: Ambiente do Relatório ── */}
+        {/* ── Aba: Registro das Despesas ── */}
+        {activeTab === 'despesas' && (isAdmin || canAccessReport) && (
+          <div className="space-y-10">
+            <Ledger
+              entries={ledgerEntries}
+              onEdit={(entry) => setEditingEntry(entry)}
+              onDelete={handleDeleteEntry}
+              onStatusChange={handleStatusChange}
+              onUpdateComment={handleUpdateAuditComment}
+              canDelete={isAdmin}
+              isAdmin={isAdmin}
+            />
+          </div>
+        )}
+
+        {/* ── Aba: Análise do Plano de Trabalho (Saldos) ── */}
+        {activeTab === 'saldos' && (isAdmin || canAccessReport) && (
+          <div className="space-y-10">
+            <div className="w-full">
+              <BudgetStatus entries={ledgerEntries} />
+            </div>
+          </div>
+        )}
+
+        {/* ── Aba: Painel (Ambiente do Relatório) ── */}
         {activeTab === 'report' && (isAdmin || canAccessReport) && (
           <div className="space-y-10">
             <SummaryCards
@@ -366,18 +406,6 @@ export function App() {
                 groupData={chartData.group}
                 stageData={chartData.stage}
               />
-            </div>
-            <Ledger
-              entries={ledgerEntries}
-              onEdit={(entry) => setEditingEntry(entry)}
-              onDelete={handleDeleteEntry}
-              onStatusChange={handleStatusChange}
-              onUpdateComment={handleUpdateAuditComment}
-              canDelete={isAdmin}
-              isAdmin={isAdmin}
-            />
-            <div className="w-full">
-              <BudgetStatus entries={ledgerEntries} />
             </div>
           </div>
         )}
