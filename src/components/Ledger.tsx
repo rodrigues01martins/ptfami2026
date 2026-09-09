@@ -143,7 +143,7 @@ export function Ledger({
       </div>
 
       {/* ── Tabela ── */}
-      <div className="overflow-x-auto max-h-[500px]">
+      <div className="overflow-x-auto">
         <table className="w-full text-left text-sm border-collapse">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50/50 sticky top-0 z-10">

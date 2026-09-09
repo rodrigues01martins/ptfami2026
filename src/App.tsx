@@ -334,7 +334,7 @@ export function App() {
         onExportCSV={handleExportCSV}
         showGestao={isAdmin}
         onGestaoClick={() => setActiveTab('gestao')}
-        userEmail={user?.email || 'Modo Visualização'}
+        onHomeClick={() => setActiveTab('entry')}
         onSignOut={() => signOut(auth)}
       />
       <div className="p-4 md:p-8">
@@ -363,7 +363,7 @@ export function App() {
               onClick={() => setActiveTab('saldos')}
               className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'saldos' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}
             >
-              Análise do Plano de Trabalho (Saldos)
+              Controle de Saldos
             </button>
           )}
           {(isAdmin || canAccessReport) && (
