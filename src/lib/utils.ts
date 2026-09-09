@@ -1,8 +1,24 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { BUDGET_DATA } from '../constants';
+import { Remanejamento } from '../types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+// Previsto efetivo de um item: valor original do plano (constants.ts) + remanejamentos
+// recebidos - remanejamentos cedidos. constants.ts continua sendo a fonte fixa do
+// orçamento original; remanejamentos são deltas gravados no Firestore.
+export function getPrevisto(itemId: string, remanejamentos: Remanejamento[] = []): number {
+  const base = BUDGET_DATA.find(i => i.id === itemId)?.value || 0;
+  const recebido = remanejamentos
+    .filter(r => r.itemDestinoId === itemId)
+    .reduce((acc, r) => acc + r.valor, 0);
+  const cedido = remanejamentos
+    .filter(r => r.itemOrigemId === itemId)
+    .reduce((acc, r) => acc + r.valor, 0);
+  return base + recebido - cedido;
 }
 
 export const fmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });

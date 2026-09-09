@@ -12,7 +12,8 @@ import { EditModal } from './components/EditModal';
 import { Toast } from './components/Toast';
 import { Login } from './components/Login';
 import { BUDGET_DATA } from './constants';
-import { LedgerEntry } from './types';
+import { LedgerEntry, Remanejamento } from './types';
+import { getPrevisto } from './lib/utils';
 import { User as UserIcon } from 'lucide-react';
 import RelatorioFinal from './components/RelatorioFinal';
 import { UserManagement } from './components/UserManagement';
@@ -25,6 +26,7 @@ export function App() {
   const [activeTab, setActiveTab] = useState<'entry' | 'despesas' | 'saldos' | 'report' | 'relatorio' | 'gestao'>('entry');
   const [filterStatus, setFilterStatus] = useState<LedgerEntry['approvalStatus'] | 'Todos'>('Todos');
   const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>([]);
+  const [remanejamentos, setRemanejamentos] = useState<Remanejamento[]>([]);
   const [toast, setToast] = useState({ message: '', isVisible: false });
   const [editingEntry, setEditingEntry] = useState<LedgerEntry | null>(null);
   const [canAccessRelatorio, setCanAccessRelatorio] = useState(false);
@@ -93,6 +95,16 @@ export function App() {
       const data = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as LedgerEntry));
       setLedgerEntries(data);
     }, (error) => console.error("Erro Firestore:", error));
+    return () => unsubscribe();
+  }, [user, isDemoMode]);
+
+  useEffect(() => {
+    if (!user && !isDemoMode) return;
+    const q = query(collection(db, 'remanejamentos'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Remanejamento));
+      setRemanejamentos(data);
+    }, (error) => console.error("Erro Firestore (remanejamentos):", error));
     return () => unsubscribe();
   }, [user, isDemoMode]);
 
@@ -186,6 +198,38 @@ export function App() {
     }
   };
 
+  const handleAddRemanejamento = async (itemOrigemId: string, itemDestinoId: string, valor: number) => {
+    if (!isAdmin && !canAccessReport) throw new Error('Acesso negado.');
+    if (itemOrigemId === itemDestinoId) throw new Error('A rubrica de origem deve ser diferente da rubrica de destino.');
+    if (!Number.isFinite(valor) || valor <= 0) throw new Error('Informe um valor válido, maior que zero.');
+
+    const itemOrigem = BUDGET_DATA.find(i => i.id === itemOrigemId);
+    const itemDestino = BUDGET_DATA.find(i => i.id === itemDestinoId);
+    if (!itemOrigem || !itemDestino) throw new Error('Rubrica inválida.');
+
+    const gastoOrigem = ledgerEntries
+      .filter(e => e.itemCode === itemOrigemId)
+      .reduce((acc, e) => acc + e.amount, 0);
+    const saldoOrigem = getPrevisto(itemOrigemId, remanejamentos) - gastoOrigem;
+    if (valor > saldoOrigem) throw new Error('Valor maior que o saldo disponível na rubrica de origem.');
+
+    try {
+      await addDoc(collection(db, 'remanejamentos'), {
+        itemOrigemId,
+        itemOrigemDesc: itemOrigem.desc,
+        itemDestinoId,
+        itemDestinoDesc: itemDestino.desc,
+        valor,
+        createdAt: new Date().toISOString(),
+        authorUid: user?.uid || 'demo-user',
+      });
+      showToast('Remanejamento registrado com sucesso!');
+    } catch (e) {
+      showToast('Erro ao gravar o remanejamento.');
+      throw e;
+    }
+  };
+
   const handleUpdateAuditComment = async (id: string, comment: string) => {
     if (!isAdmin) return;
     try {
@@ -204,8 +248,9 @@ export function App() {
       const gasto = ledgerEntries
         .filter(e => String(e.itemCode).trim() === String(item.id).trim())
         .reduce((acc, e) => acc + (Number(e.amount) || 0), 0);
-      const saldo = item.value - gasto;
-      return saldo <= 0 || saldo / item.value <= 0.1;
+      const previsto = getPrevisto(item.id, remanejamentos);
+      const saldo = previsto - gasto;
+      return saldo <= 0 || (previsto > 0 && saldo / previsto <= 0.1);
     }).length;
     const lastTs = ledgerEntries.reduce<string>((latest, entry) => {
       const ts = entry.updatedAt || entry.createdAt || '';
@@ -225,7 +270,7 @@ export function App() {
       percentTotal: totalOrcado > 0 ? (totalExecutado / totalOrcado) * 100 : 0,
       criticalItems, lastAudit,
     };
-  }, [ledgerEntries]);
+  }, [ledgerEntries, remanejamentos]);
 
   const chartData = useMemo(() => {
     const monthlyMap = new Map<string, number>();
@@ -242,7 +287,7 @@ export function App() {
     return {
       category: {
         labels: categories,
-        previsto: categories.map(c => BUDGET_DATA.filter(i => i.type === c).reduce((acc, i) => acc + (i.value || 0), 0)),
+        previsto: categories.map(c => BUDGET_DATA.filter(i => i.type === c).reduce((acc, i) => acc + getPrevisto(i.id, remanejamentos), 0)),
         executado: categories.map(c => ledgerEntries.filter(e => e.category === c).reduce((acc, e) => acc + e.amount, 0))
       },
       month: {
@@ -251,16 +296,16 @@ export function App() {
       },
       group: {
         labels: groups,
-        previsto: groups.map(g => BUDGET_DATA.filter(i => i.group === g).reduce((acc, i) => acc + (i.value || 0), 0)),
+        previsto: groups.map(g => BUDGET_DATA.filter(i => i.group === g).reduce((acc, i) => acc + getPrevisto(i.id, remanejamentos), 0)),
         executado: groups.map(g => ledgerEntries.reduce((acc, e) => BUDGET_DATA.find(i => i.id === e.itemCode)?.group === g ? acc + e.amount : acc, 0))
       },
       stage: {
         labels: stages,
-        previsto: stages.map(s => BUDGET_DATA.filter(i => i.stage === s).reduce((acc, i) => acc + (i.value || 0), 0)),
+        previsto: stages.map(s => BUDGET_DATA.filter(i => i.stage === s).reduce((acc, i) => acc + getPrevisto(i.id, remanejamentos), 0)),
         executado: stages.map(s => ledgerEntries.reduce((acc, e) => BUDGET_DATA.find(i => i.id === e.itemCode)?.stage === s ? acc + e.amount : acc, 0))
       }
     };
-  }, [ledgerEntries]);
+  }, [ledgerEntries, remanejamentos]);
 
   // Redireciona para a primeira aba disponível após carregar permissões
   useEffect(() => {
@@ -382,7 +427,12 @@ export function App() {
         {activeTab === 'saldos' && (isAdmin || canAccessReport) && (
           <div className="space-y-10">
             <div className="w-full">
-              <BudgetStatus entries={ledgerEntries} />
+              <BudgetStatus
+                entries={ledgerEntries}
+                remanejamentos={remanejamentos}
+                canManageRemanejamento={isAdmin || canAccessReport}
+                onAddRemanejamento={handleAddRemanejamento}
+              />
             </div>
           </div>
         )}
@@ -437,6 +487,7 @@ export function App() {
           onClose={() => setEditingEntry(null)}
           entry={editingEntry}
           onSave={handleUpdateEntry}
+          remanejamentos={remanejamentos}
           getSpentForItem={(code, id) =>
             ledgerEntries
               .filter(e => e.itemCode === code && e.id !== id)

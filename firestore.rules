@@ -15,6 +15,12 @@ service cloud.firestore {
          (request.auth.token.email == "rodrigues01martins@gmail.com" &&
           request.auth.token.email_verified == true));
     }
+    function canManageRemanejamento() {
+      return isAdmin() ||
+        (isAuthenticated() &&
+         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.canAccessReport == true);
+    }
 
     // ── Usuários ─────────────────────────────────────────────
     match /users/{userId} {
@@ -36,6 +42,13 @@ service cloud.firestore {
       allow create: if isAuthenticated();
       allow update: if isAuthenticated() && (isOwner(resource.data.authorUid) || isAdmin());
       allow delete: if isAdmin();
+    }
+
+    // ── Remanejamentos de saldo entre rubricas ──────────────────
+    match /remanejamentos/{id} {
+      allow read: if isAuthenticated();
+      allow create: if canManageRemanejamento();
+      allow update, delete: if isAdmin();
     }
 
     // ── Audit ────────────────────────────────────────────────

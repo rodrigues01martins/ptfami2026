@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Upload } from 'lucide-react';
-import { LedgerEntry } from '../types';
+import { LedgerEntry, Remanejamento } from '../types';
 import { BUDGET_DATA } from '../constants';
-import { fmt, formatDateForInput, fileToDataUrl } from '../lib/utils';
+import { fmt, formatDateForInput, fileToDataUrl, getPrevisto } from '../lib/utils';
 
 interface EditModalProps {
   isOpen: boolean;
   onClose: () => void;
   entry: LedgerEntry | null;
   onSave: (updated: LedgerEntry) => void;
+  remanejamentos: Remanejamento[];
   getSpentForItem: (itemCode: string, excludeId: any) => number;
 }
 
-export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, onSave, getSpentForItem }) => {
+export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, onSave, remanejamentos, getSpentForItem }) => {
   const [itemCode, setItemCode] = useState('');
   const [nf, setNf] = useState('');
   const [supplier, setSupplier] = useState('');
@@ -43,7 +44,8 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, on
   // Sempre derivar o item selecionado do itemCode atual (state)
   const selectedItem = BUDGET_DATA.find(i => i.id === itemCode);
   const spent = getSpentForItem(itemCode, entry.id);
-  const balance = selectedItem ? selectedItem.value - spent : 0;
+  const previsto = selectedItem ? getPrevisto(itemCode, remanejamentos) : 0;
+  const balance = selectedItem ? previsto - spent : 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,7 +143,7 @@ export const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, entry, on
                 </div>
                 <div className="flex justify-between gap-2">
                   <span className="text-slate-500">Previsto no item</span>
-                  <strong>{fmt.format(selectedItem?.value || 0)}</strong>
+                  <strong>{fmt.format(previsto)}</strong>
                 </div>
                 <div className="flex justify-between gap-2">
                   <span className="text-slate-500">Executado sem este lançamento</span>

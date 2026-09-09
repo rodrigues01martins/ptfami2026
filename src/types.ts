@@ -29,6 +29,17 @@ export interface LedgerEntry {
   auditComment?: string;
 }
 
+export interface Remanejamento {
+  id: string;
+  itemOrigemId: string;
+  itemOrigemDesc: string;
+  itemDestinoId: string;
+  itemDestinoDesc: string;
+  valor: number;
+  createdAt: string;
+  authorUid: string;
+}
+
 export interface AuditLogEntry {
   timestamp: string;
   action: string;
