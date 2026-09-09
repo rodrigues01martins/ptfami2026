@@ -330,7 +330,13 @@ export function App() {
   );
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8">
+    <div className="min-h-screen bg-[#f8fafc]">
+      <Header
+        onExportCSV={handleExportCSV}
+        showGestao={isAdmin}
+        onGestaoClick={() => setActiveTab('gestao')}
+      />
+      <div className="p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
 
         {/* ── Barra superior ── */}
@@ -345,8 +351,6 @@ export function App() {
             Sair
           </button>
         </div>
-
-        <Header onExportCSV={handleExportCSV} />
 
         {/* ── Tabs ── */}
         <div className="mb-8 flex gap-3">
@@ -382,16 +386,6 @@ export function App() {
               Painel
             </button>
           )}
-          {/* Aba Gestão de Usuários — visível apenas para admins */}
-          {isAdmin && (
-            <button
-              onClick={() => setActiveTab('gestao')}
-              className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === 'gestao' ? 'bg-[#00735C] text-white shadow-lg' : 'bg-white text-[#00735C] border'}`}
-            >
-              Gestão de Usuários
-            </button>
-          )}
-
           {/* Aba Relatório Final — visível apenas para admins ou usuários autorizados */}
           {canAccessRelatorio && (
             <button
@@ -479,6 +473,7 @@ export function App() {
           </div>
         )}
 
+      </div>
       </div>
 
       {editingEntry && (
