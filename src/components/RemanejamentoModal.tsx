@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, ArrowLeftRight } from 'lucide-react';
 import { BudgetItem } from '../types';
-import { fmt } from '../lib/utils';
+import { fmt, toCents, parseMoneyInput } from '../lib/utils';
 
 interface RemanejamentoModalProps {
   isOpen: boolean;
@@ -37,11 +37,11 @@ export const RemanejamentoModal: React.FC<RemanejamentoModalProps> = ({
     e.preventDefault();
     setError('');
 
-    const valorNum = parseFloat(valor.replace(',', '.'));
+    const valorNum = parseMoneyInput(valor);
     if (!itemOrigemId) return setError('Selecione a rubrica de origem.');
     if (!Number.isFinite(valorNum) || valorNum <= 0) return setError('Informe um valor válido, maior que zero.');
     const saldo = getSaldo(itemOrigemId);
-    if (valorNum > saldo) return setError(`Valor maior que o saldo disponível na origem (${fmt.format(saldo)}).`);
+    if (toCents(valorNum) > toCents(saldo)) return setError(`Valor maior que o saldo disponível na origem (${fmt.format(saldo)}).`);
 
     setSubmitting(true);
     try {

@@ -23,6 +23,25 @@ export function getPrevisto(itemId: string, remanejamentos: Remanejamento[] = []
 
 export const fmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
+// Converte um valor em reais para centavos inteiros, arredondando. Comparar
+// valores monetários direto em float (ex.: valor > saldo) é instável: saldo
+// costuma vir de subtrações sucessivas e carrega resíduos como
+// 15447.329999999998 em vez de 15447.33, fazendo o usuário digitar
+// exatamente o valor exibido na tela e ser recusado por "saldo insuficiente".
+// Comparando em centavos inteiros esse resíduo desaparece.
+export function toCents(value: number): number {
+  return Math.round(value * 100);
+}
+
+// Interpreta um valor digitado no formato brasileiro (ex.: "12.500,50") como
+// número. Remove separadores de milhar (pontos) antes de trocar a vírgula
+// decimal por ponto — sem isso, "12.500,50" vira "12.500.50" e o parseFloat
+// para no primeiro ponto, lendo "12.5" silenciosamente (sem erro nenhum).
+export function parseMoneyInput(raw: string): number {
+  const cleaned = String(raw ?? '').trim().replace(/\./g, '').replace(',', '.');
+  return parseFloat(cleaned);
+}
+
 // Resolve uma permissão booleana a partir do documento do usuário no Firestore.
 // - Se o campo estiver definido (true/false), esse valor explícito sempre vence.
 // - Se o campo nunca foi gravado (undefined), cai no legacyField (campo antigo que

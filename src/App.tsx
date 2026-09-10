@@ -13,7 +13,7 @@ import { Toast } from './components/Toast';
 import { Login } from './components/Login';
 import { BUDGET_DATA } from './constants';
 import { LedgerEntry, Remanejamento } from './types';
-import { getPrevisto, resolvePermission } from './lib/utils';
+import { getPrevisto, resolvePermission, toCents } from './lib/utils';
 import RelatorioFinal from './components/RelatorioFinal';
 import { UserManagement } from './components/UserManagement';
 
@@ -237,7 +237,7 @@ export function App() {
       .filter(e => e.itemCode === itemOrigemId)
       .reduce((acc, e) => acc + e.amount, 0);
     const saldoOrigem = getPrevisto(itemOrigemId, remanejamentos) - gastoOrigem;
-    if (valor > saldoOrigem) throw new Error('Valor maior que o saldo disponível na rubrica de origem.');
+    if (toCents(valor) > toCents(saldoOrigem)) throw new Error('Valor maior que o saldo disponível na rubrica de origem.');
 
     try {
       await addDoc(collection(db, 'remanejamentos'), {
