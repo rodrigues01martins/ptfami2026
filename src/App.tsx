@@ -482,7 +482,7 @@ export function App() {
 
         {/* ── Aba: Relatório Final — acesso restrito a admins ou usuários autorizados ── */}
         {activeTab === 'relatorio' && canAccessRelatorio && (
-          <RelatorioFinal onBack={() => setActiveTab('entry')} />
+          <RelatorioFinal onBack={() => setActiveTab('entry')} userUid={user?.uid || 'demo-user'} />
         )}
         {activeTab === 'relatorio' && !canAccessRelatorio && (
           <div className="flex flex-col items-center justify-center py-24 text-center">

@@ -39,6 +39,12 @@ service cloud.firestore {
          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
          hasSaldosAccess(get(/databases/$(database)/documents/users/$(request.auth.uid)).data));
     }
+    function canEditRelatorioFinal() {
+      return isAdmin() ||
+        (isAuthenticated() &&
+         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.canAccessRelatorio == true);
+    }
 
     // ── Usuários ─────────────────────────────────────────────
     match /users/{userId} {
@@ -67,6 +73,12 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow create: if canManageRemanejamento();
       allow update, delete: if isAdmin();
+    }
+
+    // ── Relatório Final (preenchimento salvo na nuvem) ──────────
+    match /relatorioFinal/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if canEditRelatorioFinal();
     }
 
     // ── Audit ────────────────────────────────────────────────

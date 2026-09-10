@@ -1,5 +1,7 @@
-import React, { useState, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, Download, Upload, Printer, ArrowLeft, CheckSquare, Square } from 'lucide-react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '../firebase';
+import { ChevronLeft, ChevronRight, Download, Upload, Printer, ArrowLeft, CheckSquare, Square, Save, CloudCheck, CloudUpload, CloudOff } from 'lucide-react';
 
 /* ============================================================
    DADOS FIXOS
@@ -630,13 +632,58 @@ const Preview = ({ s, onBack }: { s: AppState; onBack: () => void }) => {
 /* ============================================================
    COMPONENTE PRINCIPAL — sem layout próprio, integra ao App
    ============================================================ */
-export default function RelatorioFinal({ onBack }: { onBack: () => void }) {
+type SaveStatus = 'loading' | 'idle' | 'saving' | 'saved' | 'error';
+
+export default function RelatorioFinal({ onBack, userUid }: { onBack: () => void; userUid: string }) {
   const [state, setState] = useState<AppState>(initialState);
   const [currentStep, setCurrentStep] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('loading');
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+  const loadedRef = useRef(false);
   const set = useCallback((fn: (p: AppState) => AppState) => setState(fn), []);
 
   const progress = Math.round((STEPS.filter(s => isStepFilled(state, s.id)).length / STEPS.length) * 100);
+
+  // Carrega o preenchimento salvo na nuvem (Firestore) uma única vez, ao abrir.
+  useEffect(() => {
+    const ref = doc(db, 'relatorioFinal', 'atual');
+    getDoc(ref).then(snap => {
+      if (snap.exists()) {
+        const { updatedAt, updatedBy, ...saved } = snap.data() as any;
+        setState(s => ({ ...s, ...saved }));
+        setLastSavedAt(updatedAt || null);
+      }
+    }).catch(err => console.error('Erro ao carregar Relatório Final salvo:', err))
+      .finally(() => {
+        loadedRef.current = true;
+        setSaveStatus('idle');
+      });
+  }, []);
+
+  const persist = async () => {
+    setSaveStatus('saving');
+    try {
+      await setDoc(doc(db, 'relatorioFinal', 'atual'), {
+        ...state,
+        updatedAt: new Date().toISOString(),
+        updatedBy: userUid,
+      });
+      setLastSavedAt(new Date().toISOString());
+      setSaveStatus('saved');
+    } catch (err) {
+      console.error('Erro ao salvar Relatório Final:', err);
+      setSaveStatus('error');
+    }
+  };
+
+  // Salva automaticamente 2s após a última alteração (não roda antes do
+  // carregamento inicial terminar, para não sobrescrever o que já está salvo).
+  useEffect(() => {
+    if (!loadedRef.current) return;
+    const t = setTimeout(() => { persist(); }, 2000);
+    return () => clearTimeout(t);
+  }, [state]);
 
   const handleExport = () => {
     const blob = new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
@@ -720,13 +767,29 @@ export default function RelatorioFinal({ onBack }: { onBack: () => void }) {
           })}
         </nav>
 
+        {/* Status de salvamento */}
+        <div className="px-5 py-3 border-t border-white/15 flex items-center gap-2 text-[10px]">
+          {saveStatus === 'loading' && <><CloudUpload size={13} className="text-white/50 animate-pulse"/> <span className="text-white/50">Carregando preenchimento salvo...</span></>}
+          {saveStatus === 'saving' && <><CloudUpload size={13} className="text-white/70 animate-pulse"/> <span className="text-white/70">Salvando...</span></>}
+          {saveStatus === 'saved' && <><CloudCheck size={13} className="text-[#FCD951]"/> <span className="text-white/70">Salvo{lastSavedAt ? ` às ${new Date(lastSavedAt).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}` : ''}</span></>}
+          {saveStatus === 'error' && <><CloudOff size={13} className="text-red-300"/> <span className="text-red-200">Erro ao salvar — tentando de novo</span></>}
+          {saveStatus === 'idle' && (
+            lastSavedAt
+              ? <><CloudCheck size={13} className="text-white/50"/> <span className="text-white/50">Salvo às {new Date(lastSavedAt).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span></>
+              : <><CloudOff size={13} className="text-white/50"/> <span className="text-white/50">Ainda não salvo</span></>
+          )}
+        </div>
+
         {/* Ações */}
         <div className="p-4 border-t border-white/15 space-y-2">
+          <button onClick={persist} disabled={saveStatus==='saving'} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold bg-white/15 rounded-lg text-white hover:bg-white/25 transition-all disabled:opacity-60 disabled:cursor-not-allowed">
+            <Save size={12}/> Salvar agora
+          </button>
           <button onClick={handleExport} className="w-full flex items-center gap-2 px-3 py-2 text-xs border border-white/25 rounded-lg text-white/80 hover:bg-white/10 hover:text-white transition-all">
-            <Download size={12}/> Salvar progresso (.json)
+            <Download size={12}/> Exportar cópia (.json)
           </button>
           <label className="w-full flex items-center gap-2 px-3 py-2 text-xs border border-white/25 rounded-lg text-white/80 hover:bg-white/10 hover:text-white transition-all cursor-pointer">
-            <Upload size={12}/> Carregar progresso
+            <Upload size={12}/> Importar de arquivo (.json)
             <input type="file" accept=".json" className="hidden" onChange={handleImport}/>
           </label>
         </div>
